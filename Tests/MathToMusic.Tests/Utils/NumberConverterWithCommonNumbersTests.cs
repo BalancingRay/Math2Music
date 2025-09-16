@@ -81,5 +81,135 @@ namespace MathToMusic.Tests.Utils
         {
             return NumberConverter.Convert(input, from, to);
         }
+
+        // Tests for new large number conversion functionality using CommonNumbers data
+        
+        [Test]
+        public void ConvertLarge_PI100Digits_DecToBinAndBack_RoundTrip()
+        {
+            // Arrange - extract numeric part of PI100 (remove decimal point)
+            string piDigits = CommonNumbers.Collection["PI100"].Replace(".", "").Replace(" ", "");
+            piDigits = piDigits.Substring(0, Math.Min(piDigits.Length, 50)); // Take first 50 digits for test
+            
+            // Act - convert to binary and back to decimal
+            string binaryResult = NumberConverter.ConvertLarge(piDigits, NumberFormats.Dec, NumberFormats.Bin);
+            string decimalResult = NumberConverter.ConvertLarge(binaryResult, NumberFormats.Bin, NumberFormats.Dec);
+            
+            // Assert - should get back original number
+            Assert.That(decimalResult, Is.EqualTo(piDigits));
+        }
+
+        [Test]
+        public void ConvertLarge_E100Digits_DecToBinAndBack_RoundTrip()
+        {
+            // Arrange - extract numeric part of E100 (remove decimal point)
+            string eDigits = CommonNumbers.Collection["E100"].Replace(".", "").Replace(" ", "");
+            eDigits = eDigits.Substring(0, Math.Min(eDigits.Length, 50)); // Take first 50 digits for test
+            
+            // Act - convert to binary and back to decimal
+            string binaryResult = NumberConverter.ConvertLarge(eDigits, NumberFormats.Dec, NumberFormats.Bin);
+            string decimalResult = NumberConverter.ConvertLarge(binaryResult, NumberFormats.Bin, NumberFormats.Dec);
+            
+            // Assert - should get back original number
+            Assert.That(decimalResult, Is.EqualTo(eDigits));
+        }
+
+        [Test]
+        public void ConvertLarge_FI100Digits_DecToBinAndBack_RoundTrip()
+        {
+            // Arrange - extract numeric part of FI100 (golden ratio, remove decimal point)
+            string fiDigits = CommonNumbers.Collection["FI100"].Replace(".", "").Replace(" ", "");
+            fiDigits = fiDigits.Substring(0, Math.Min(fiDigits.Length, 50)); // Take first 50 digits for test
+            
+            // Act - convert to binary and back to decimal
+            string binaryResult = NumberConverter.ConvertLarge(fiDigits, NumberFormats.Dec, NumberFormats.Bin);
+            string decimalResult = NumberConverter.ConvertLarge(binaryResult, NumberFormats.Bin, NumberFormats.Dec);
+            
+            // Assert - should get back original number
+            Assert.That(decimalResult, Is.EqualTo(fiDigits));
+        }
+
+        [Test]
+        public void ConvertLarge_VeryLargePI1000_FirstDigits_RoundTrip()
+        {
+            // Arrange - use first part of PI1000 for a very large number test
+            string pi1000 = CommonNumbers.Collection["PI1000"].Replace(".", "").Replace(" ", "");
+            string firstPart = pi1000.Substring(0, Math.Min(pi1000.Length, 100)); // Take first 100 digits
+            
+            // Act - convert to binary and back to decimal
+            string binaryResult = NumberConverter.ConvertLarge(firstPart, NumberFormats.Dec, NumberFormats.Bin);
+            string decimalResult = NumberConverter.ConvertLarge(binaryResult, NumberFormats.Bin, NumberFormats.Dec);
+            
+            // Assert - should get back original number
+            Assert.That(decimalResult, Is.EqualTo(firstPart));
+        }
+
+        [Test]
+        public void ConvertLarge_VeryLargeE1000_FirstDigits_RoundTrip()
+        {
+            // Arrange - use first part of E1000 for a very large number test
+            string e1000 = CommonNumbers.Collection["E1000"].Replace(".", "").Replace(" ", "");
+            string firstPart = e1000.Substring(0, Math.Min(e1000.Length, 100)); // Take first 100 digits
+            
+            // Act - convert to binary and back to decimal
+            string binaryResult = NumberConverter.ConvertLarge(firstPart, NumberFormats.Dec, NumberFormats.Bin);
+            string decimalResult = NumberConverter.ConvertLarge(binaryResult, NumberFormats.Bin, NumberFormats.Dec);
+            
+            // Assert - should get back original number
+            Assert.That(decimalResult, Is.EqualTo(firstPart));
+        }
+
+        // Performance test for very long arguments
+        [Test]
+        public void ConvertLarge_PerformanceTest_VeryLongNumber()
+        {
+            // Arrange - create a very long decimal number (500 digits)
+            string longNumber = string.Concat(Enumerable.Repeat("1234567890", 50));
+            
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            // Act - convert to binary and back
+            string binaryResult = NumberConverter.ConvertLarge(longNumber, NumberFormats.Dec, NumberFormats.Bin);
+            string decimalResult = NumberConverter.ConvertLarge(binaryResult, NumberFormats.Bin, NumberFormats.Dec);
+            
+            stopwatch.Stop();
+            
+            // Assert - should complete within reasonable time and maintain accuracy
+            Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(5000), "Conversion should complete within 5 seconds");
+            Assert.That(decimalResult, Is.EqualTo(longNumber), "Round trip should maintain accuracy");
+        }
+
+        // Test with specific examples that are easy to verify manually
+        [TestCase("255", ExpectedResult = "11111111")]
+        [TestCase("1024", ExpectedResult = "10000000000")]
+        [TestCase("65535", ExpectedResult = "1111111111111111")]
+        public string ConvertLarge_DecimalToBinary_KnownValues(string input)
+        {
+            return NumberConverter.ConvertLarge(input, NumberFormats.Dec, NumberFormats.Bin);
+        }
+
+        [TestCase("11111111", ExpectedResult = "255")]
+        [TestCase("10000000000", ExpectedResult = "1024")]
+        [TestCase("1111111111111111", ExpectedResult = "65535")]
+        public string ConvertLarge_BinaryToDecimal_KnownValues(string input)
+        {
+            return NumberConverter.ConvertLarge(input, NumberFormats.Bin, NumberFormats.Dec);
+        }
+
+        // Test numbers larger than uint64 max (18446744073709551615)
+        [Test]
+        public void ConvertLarge_NumberLargerThanUint64Max_Works()
+        {
+            // Arrange - number larger than uint64 max
+            string largeNumber = "18446744073709551616"; // uint64 max + 1
+            
+            // Act
+            string binaryResult = NumberConverter.ConvertLarge(largeNumber, NumberFormats.Dec, NumberFormats.Bin);
+            string decimalResult = NumberConverter.ConvertLarge(binaryResult, NumberFormats.Bin, NumberFormats.Dec);
+            
+            // Assert
+            Assert.That(decimalResult, Is.EqualTo(largeNumber));
+            Assert.That(binaryResult, Is.EqualTo("10000000000000000000000000000000000000000000000000000000000000000"));
+        }
     }
 }
