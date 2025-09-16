@@ -128,5 +128,178 @@ namespace MathToMusic.Tests.Utils
         {
             return NumberConverter.Convert(input, from, to);
         }
+
+        // Tests for new large number conversion methods
+        
+        [Test]
+        public void ConvertLargeBinaryToDecimal_SmallNumber_ReturnsCorrect()
+        {
+            // Arrange - test with small numbers first to verify correctness
+            string binaryInput = "1010"; // 10 in decimal
+            
+            // Act
+            string result = NumberConverter.ConvertLargeBinaryToDecimal(binaryInput);
+            
+            // Assert
+            Assert.That(result, Is.EqualTo("10"));
+        }
+
+        [Test]
+        public void ConvertLargeDecimalToBinary_SmallNumber_ReturnsCorrect()
+        {
+            // Arrange - test with small numbers first to verify correctness
+            string decimalInput = "10";
+            
+            // Act
+            string result = NumberConverter.ConvertLargeDecimalToBinary(decimalInput);
+            
+            // Assert
+            Assert.That(result, Is.EqualTo("1010"));
+        }
+
+        [Test]
+        public void ConvertLargeBinaryToDecimal_LargeNumber_ReturnsCorrect()
+        {
+            // Arrange - test with a number larger than uint64 max (18446744073709551615)
+            string binaryInput = "11111111111111111111111111111111111111111111111111111111111111111"; // 65 bits, all 1s
+            
+            // Act
+            string result = NumberConverter.ConvertLargeBinaryToDecimal(binaryInput);
+            
+            // Assert - Should be 2^65 - 1 = 36893488147419103231
+            Assert.That(result, Is.EqualTo("36893488147419103231"));
+        }
+
+        [Test]
+        public void ConvertLargeDecimalToBinary_LargeNumber_ReturnsCorrect()
+        {
+            // Arrange - test with a number larger than uint64 max
+            string decimalInput = "36893488147419103231"; // 2^65 - 1
+            
+            // Act
+            string result = NumberConverter.ConvertLargeDecimalToBinary(decimalInput);
+            
+            // Assert - Should be 65 bits, all 1s
+            Assert.That(result, Is.EqualTo("11111111111111111111111111111111111111111111111111111111111111111"));
+        }
+
+        [Test]
+        public void ConvertLarge_DecToBin_SmallNumber_ReturnsCorrect()
+        {
+            // Arrange
+            string input = "255";
+            
+            // Act
+            string result = NumberConverter.ConvertLarge(input, NumberFormats.Dec, NumberFormats.Bin);
+            
+            // Assert
+            Assert.That(result, Is.EqualTo("11111111"));
+        }
+
+        [Test]
+        public void ConvertLarge_BinToDec_SmallNumber_ReturnsCorrect()
+        {
+            // Arrange
+            string input = "11111111";
+            
+            // Act
+            string result = NumberConverter.ConvertLarge(input, NumberFormats.Bin, NumberFormats.Dec);
+            
+            // Assert
+            Assert.That(result, Is.EqualTo("255"));
+        }
+
+        [Test]
+        public void ConvertLarge_SameFormat_ReturnsOriginal()
+        {
+            // Arrange
+            string input = "12345";
+            
+            // Act
+            string result = NumberConverter.ConvertLarge(input, NumberFormats.Dec, NumberFormats.Dec);
+            
+            // Assert
+            Assert.That(result, Is.EqualTo(input));
+        }
+
+        [Test]
+        public void ConvertLarge_EmptyInput_ReturnsEmpty()
+        {
+            // Act
+            string result = NumberConverter.ConvertLarge("", NumberFormats.Dec, NumberFormats.Bin);
+            
+            // Assert
+            Assert.That(result, Is.EqualTo(string.Empty));
+        }
+
+        [Test]
+        public void ConvertLarge_UnsupportedFormat_ThrowsException()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => 
+                NumberConverter.ConvertLarge("123", NumberFormats.Dec, NumberFormats.Hex));
+        }
+
+        [TestCase("", ExpectedResult = "0")]
+        [TestCase("0", ExpectedResult = "0")]
+        [TestCase("1", ExpectedResult = "1")]
+        [TestCase("101", ExpectedResult = "5")]
+        [TestCase("1111", ExpectedResult = "15")]
+        public string ConvertLargeBinaryToDecimal_EdgeCases_ReturnsCorrect(string input)
+        {
+            return NumberConverter.ConvertLargeBinaryToDecimal(input);
+        }
+
+        [TestCase("", ExpectedResult = "0")]
+        [TestCase("0", ExpectedResult = "0")]
+        [TestCase("1", ExpectedResult = "1")]
+        [TestCase("5", ExpectedResult = "101")]
+        [TestCase("15", ExpectedResult = "1111")]
+        public string ConvertLargeDecimalToBinary_EdgeCases_ReturnsCorrect(string input)
+        {
+            return NumberConverter.ConvertLargeDecimalToBinary(input);
+        }
+
+        [Test]
+        public void ConvertLargeBinaryToDecimal_WithSpaces_ReturnsCorrect()
+        {
+            // Arrange - test with spaces in input (should be ignored)
+            string input = "1010 1010";
+            
+            // Act
+            string result = NumberConverter.ConvertLargeBinaryToDecimal(input);
+            
+            // Assert - Should treat as 10101010 (170 in decimal)
+            Assert.That(result, Is.EqualTo("170"));
+        }
+
+        [Test]
+        public void ConvertLargeDecimalToBinary_WithSpaces_ReturnsCorrect()
+        {
+            // Arrange - test with spaces in input (should be ignored)
+            string input = "1 7 0";
+            
+            // Act
+            string result = NumberConverter.ConvertLargeDecimalToBinary(input);
+            
+            // Assert - Should treat as 170 
+            Assert.That(result, Is.EqualTo("10101010"));
+        }
+
+        [Test]
+        public void ConvertLargeBinaryToDecimal_InvalidChar_ThrowsException()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => 
+                NumberConverter.ConvertLargeBinaryToDecimal("102")); // '2' is invalid in binary
+        }
+
+        [Test]
+        public void ConvertLargeDecimalToBinary_InvalidChar_ThrowsException()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => 
+                NumberConverter.ConvertLargeDecimalToBinary("12a3")); // 'a' is invalid in decimal
+        }
     }
 }
