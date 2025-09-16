@@ -24,37 +24,48 @@ namespace MathToMusic.Tests.Utils
         [TestCase(null, ExpectedResult = "")]
         public string Convert_EmptyOrNullInput_ReturnsEmpty(string input)
         {
-            return NumberConverter.Convert(input, NumberFormats.Dec, NumberFormats.Bin);
+            return NumberConverter.Convert(input, NumberFormats.Bin, NumberFormats.Oct);
         }
 
-        [TestCase("1010", NumberFormats.Bin, NumberFormats.Dec, ExpectedResult = "10")]
+        // Tests for binary-based format conversions (no decimal format)
         [TestCase("1010", NumberFormats.Bin, NumberFormats.Oct, ExpectedResult = "12")]
         [TestCase("1010", NumberFormats.Bin, NumberFormats.Hex, ExpectedResult = "A")]
+        [TestCase("1010", NumberFormats.Bin, NumberFormats.Qad, ExpectedResult = "22")]
         [TestCase("12", NumberFormats.Oct, NumberFormats.Bin, ExpectedResult = "1010")]
-        [TestCase("12", NumberFormats.Oct, NumberFormats.Dec, ExpectedResult = "10")]
         [TestCase("12", NumberFormats.Oct, NumberFormats.Hex, ExpectedResult = "A")]
+        [TestCase("12", NumberFormats.Oct, NumberFormats.Qad, ExpectedResult = "22")]
         [TestCase("A", NumberFormats.Hex, NumberFormats.Bin, ExpectedResult = "1010")]
         [TestCase("A", NumberFormats.Hex, NumberFormats.Oct, ExpectedResult = "12")]
-        [TestCase("A", NumberFormats.Hex, NumberFormats.Dec, ExpectedResult = "10")]
-        [TestCase("10", NumberFormats.Dec, NumberFormats.Bin, ExpectedResult = "1010")]
-        [TestCase("10", NumberFormats.Dec, NumberFormats.Oct, ExpectedResult = "12")]
-        [TestCase("10", NumberFormats.Dec, NumberFormats.Hex, ExpectedResult = "A")]
+        [TestCase("A", NumberFormats.Hex, NumberFormats.Qad, ExpectedResult = "22")]
+        [TestCase("22", NumberFormats.Qad, NumberFormats.Bin, ExpectedResult = "1010")]
+        [TestCase("22", NumberFormats.Qad, NumberFormats.Oct, ExpectedResult = "12")]
+        [TestCase("22", NumberFormats.Qad, NumberFormats.Hex, ExpectedResult = "A")]
         public string Convert_BetweenFormats_ReturnsCorrectResult(string input, NumberFormats from, NumberFormats to)
         {
             return NumberConverter.Convert(input, from, to);
         }
 
-        [TestCase("11", NumberFormats.Qad, NumberFormats.Dec, ExpectedResult = "5")] // 1*4^1 + 1*4^0 = 5
-        [TestCase("5", NumberFormats.Dec, NumberFormats.Qad, ExpectedResult = "11")]
-        public string Convert_QuaternaryFormat_ReturnsCorrectResult(string input, NumberFormats from, NumberFormats to)
+        [Test]
+        public void Convert_DecimalFormat_ThrowsArgumentException()
+        {
+            // Test that decimal format is not supported
+            Assert.Throws<ArgumentException>(() => NumberConverter.Convert("123", NumberFormats.Dec, NumberFormats.Bin));
+            Assert.Throws<ArgumentException>(() => NumberConverter.Convert("1010", NumberFormats.Bin, NumberFormats.Dec));
+        }
+
+        // Test cases using long binary strings - larger than max uint64
+        [TestCase("1111111111111111111111111111111111111111111111111111111111111111111", NumberFormats.Bin, NumberFormats.Hex, ExpectedResult = "7FFFFFFFFFFFFFFFF")]
+        [TestCase("1010101010101010101010101010101010101010101010101010101010101010101", NumberFormats.Bin, NumberFormats.Oct, ExpectedResult = "12525252525252525252525")]
+        [TestCase("110011001100110011001100110011001100110011001100110011001100110011", NumberFormats.Bin, NumberFormats.Qad, ExpectedResult = "303030303030303030303030303030303")]
+        public string Convert_VeryLongStrings_ReturnsCorrectResult(string input, NumberFormats from, NumberFormats to)
         {
             return NumberConverter.Convert(input, from, to);
         }
 
+        // Legacy methods test - keeping these for backward compatibility
         [TestCase("101", NumberFormats.Bin, ExpectedResult = 5)]
         [TestCase("12", NumberFormats.Oct, ExpectedResult = 10)]
         [TestCase("FF", NumberFormats.Hex, ExpectedResult = 255)]
-        [TestCase("100", NumberFormats.Dec, ExpectedResult = 100)]
         public long ConvertToDecimal_VariousFormats_ReturnsCorrectDecimal(string input, NumberFormats format)
         {
             return NumberConverter.ConvertToDecimal(input, format);
@@ -63,7 +74,6 @@ namespace MathToMusic.Tests.Utils
         [TestCase(10, NumberFormats.Bin, ExpectedResult = "1010")]
         [TestCase(10, NumberFormats.Oct, ExpectedResult = "12")]
         [TestCase(10, NumberFormats.Hex, ExpectedResult = "A")]
-        [TestCase(10, NumberFormats.Dec, ExpectedResult = "10")]
         public string ConvertFromDecimal_VariousFormats_ReturnsCorrectResult(long value, NumberFormats format)
         {
             return NumberConverter.ConvertFromDecimal(value, format);
