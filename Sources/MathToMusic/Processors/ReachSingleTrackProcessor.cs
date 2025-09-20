@@ -66,6 +66,7 @@ namespace MathToMusic.Processors
             foreach (var group in octaveGroups)
             {
                 var track = new List<Tone>();
+                var lastToneByValue = new Dictionary<int, int>(); // Track last tone position by tone value
 
                 for (var i = 0; i < processedSequence.Length; i++)
                 {
@@ -75,7 +76,34 @@ namespace MathToMusic.Processors
                         if (group.ToneValues.Contains(toneValue))
                         {
                             int duration = baseDurationMilliseconds * group.DurationMultiplier;
+                            
+                            // If there was a previous occurrence of the same tone value in this group, 
+                            // check if we need to shorten it
+                            if (lastToneByValue.ContainsKey(toneValue))
+                            {
+                                var previousToneIndex = lastToneByValue[toneValue];
+                                if (previousToneIndex >= 0 && previousToneIndex < track.Count)
+                                {
+                                    var previousTone = track[previousToneIndex];
+                                    int positionsSinceLastTone = i - previousToneIndex;
+                                    int timeSinceLastTone = positionsSinceLastTone * baseDurationMilliseconds;
+                                    
+                                    // If the current tone (same value) starts before the previous tone would naturally end,
+                                    // shorten the previous tone's duration
+                                    if (timeSinceLastTone < previousTone.Duration.TotalMilliseconds)
+                                    {
+                                        var shortenedTone = new Tone
+                                        {
+                                            ObertonFrequencies = previousTone.ObertonFrequencies,
+                                            Duration = TimeSpan.FromMilliseconds(timeSinceLastTone)
+                                        };
+                                        track[previousToneIndex] = shortenedTone;
+                                    }
+                                }
+                            }
+
                             track.Add(new Tone(baseToneHz * toneValue, duration));
+                            lastToneByValue[toneValue] = track.Count - 1; // Update last occurrence index for this tone value
                         }
                         else
                         {

@@ -254,6 +254,124 @@ namespace MathToMusic.Tests
         }
 
         [Test]
+        public void Compare_SingleTrack_vs_ReachSingleTrack_SameInput()
+        {
+            // Arrange
+            var singleProcessor = new SingleTrackProcessor();
+            var reachProcessor = new ReachSingleTrackProcessor();
+            string input = "123456";
+
+            // Act
+            var singleResult = ((ITonesProcessor)singleProcessor).Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            var reachResult = reachProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
+
+            // Debug output
+            TestContext.WriteLine("=== SingleTrackProcessor Result ===");
+            TestContext.WriteLine($"Sequences: {singleResult.Count}");
+            foreach (var seq in singleResult)
+            {
+                TestContext.WriteLine($"  {seq.Title}: {seq.Tones.Count} tones, {seq.TotalDuration.TotalMilliseconds}ms total");
+                foreach (var tone in seq.Tones.Take(10))
+                {
+                    TestContext.WriteLine($"    {tone.ObertonFrequencies[0]}Hz, {tone.Duration.TotalMilliseconds}ms");
+                }
+            }
+
+            TestContext.WriteLine("=== ReachSingleTrackProcessor Result ===");
+            TestContext.WriteLine($"Sequences: {reachResult.Count}");
+            foreach (var seq in reachResult)
+            {
+                TestContext.WriteLine($"  {seq.Title}: {seq.Tones.Count} tones, {seq.TotalDuration.TotalMilliseconds}ms total");
+                foreach (var tone in seq.Tones.Take(6))
+                {
+                    TestContext.WriteLine($"    {tone.ObertonFrequencies[0]}Hz, {tone.Duration.TotalMilliseconds}ms");
+                }
+            }
+
+            // Basic assertions
+            Assert.That(singleResult, Is.Not.Null);
+            Assert.That(reachResult, Is.Not.Null);
+        }
+        
+        [Test]
+        public void Test_ReachSingleTrack_Duration_Problem()
+        {
+            // Test the specific problem mentioned: duration should be reduced when next tone 
+            // from same octave starts before original duration finishes
+            
+            var processor = new ReachSingleTrackProcessor();
+            
+            TestContext.WriteLine("=== Test tone overlap in same octave group ===");
+            string input = "1F1"; // Two '1's (Octave_Low) with 'F' (Octave_High) in between
+            var result = processor.Process(input, NumberFormats.Hex, NumberFormats.Hex);
+            
+            // Focus on Octave_Low which should have the overlapping '1' tones
+            var octaveLow = result.FirstOrDefault(s => s.Title == "Octave_Low");
+            Assert.That(octaveLow, Is.Not.Null);
+            
+            TestContext.WriteLine($"Octave_Low has {octaveLow.Tones.Count} tones:");
+            for (int i = 0; i < octaveLow.Tones.Count; i++)
+            {
+                var tone = octaveLow.Tones[i];
+                TestContext.WriteLine($"  Tone {i+1}: {tone.ObertonFrequencies[0]}Hz, {tone.Duration.TotalMilliseconds}ms");
+            }
+            
+            // The first '1' (position 0) should be shortened because the second '1' (position 2)
+            // starts at 2*300ms = 600ms, which is before the original 2400ms duration would finish
+            var firstTone = octaveLow.Tones[0];
+            var thirdTone = octaveLow.Tones[2];
+            
+            TestContext.WriteLine($"First '1' tone: {firstTone.Duration.TotalMilliseconds}ms (should be 600ms)");
+            TestContext.WriteLine($"Third '1' tone: {thirdTone.Duration.TotalMilliseconds}ms (should be 2400ms)");
+            
+            // Verify the first tone was shortened
+            Assert.That(firstTone.Duration.TotalMilliseconds, Is.EqualTo(600), 
+                "First '1' tone should be shortened to 600ms when second '1' starts");
+            Assert.That(thirdTone.Duration.TotalMilliseconds, Is.EqualTo(2400),
+                "Third '1' tone should have full duration");
+        }
+        
+        [Test]
+        public void Compare_SingleTrack_vs_ReachSingleTrack_ProduceSameMelody()
+        {
+            // This test verifies that ReachSingleTrackProcessor produces the same melody
+            // as SingleTrackProcessor but with polyphonic structure
+            
+            var singleProcessor = new SingleTrackProcessor();
+            var reachProcessor = new ReachSingleTrackProcessor();
+            string input = "123456";
+            
+            var singleResult = ((ITonesProcessor)singleProcessor).Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            var reachResult = reachProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            
+            TestContext.WriteLine("=== Melody Comparison: SingleTrack vs ReachSingleTrack ===");
+            TestContext.WriteLine($"SingleTrack: {singleResult.Count} sequence(s)");
+            TestContext.WriteLine($"ReachSingleTrack: {reachResult.Count} sequence(s)");
+            
+            // Both should have the same sequence of frequencies (same melody)
+            var singleFreqs = singleResult[0].Tones.Select(t => t.ObertonFrequencies[0]).ToList();
+            
+            // For ReachSingleTrack with Dec format, there should be only one octave group (default behavior)
+            var reachFreqs = new List<double>();
+            foreach (var seq in reachResult)
+            {
+                foreach (var tone in seq.Tones)
+                {
+                    if (tone.ObertonFrequencies[0] != 0) // Skip silent tones
+                    {
+                        reachFreqs.Add(tone.ObertonFrequencies[0]);
+                    }
+                }
+            }
+            
+            TestContext.WriteLine("Single frequencies: " + string.Join(", ", singleFreqs));
+            TestContext.WriteLine("Reach frequencies:  " + string.Join(", ", reachFreqs));
+            
+            Assert.That(reachFreqs, Is.EqualTo(singleFreqs), 
+                "ReachSingleTrackProcessor should produce the same melody as SingleTrackProcessor");
+        }
+
+        [Test]
         public void Process_BinaryToHex_PerformsConversionAndGrouping()
         {
             // Arrange
