@@ -75,10 +75,13 @@ namespace MathToMusic.Processors
                         // Check if this tone belongs to the current octave group
                         if (group.ToneValues.Contains(toneValue))
                         {
-                            int duration = baseDurationMilliseconds * group.DurationMultiplier;
+                            // Use base duration to maintain timeline synchronization
+                            // Duration multiplier affects the "reach" (how long tones sustain when interrupted)
+                            int baseDuration = baseDurationMilliseconds;
+                            int maxReachDuration = baseDurationMilliseconds * group.DurationMultiplier;
 
                             // If there was a previous occurrence of the same tone value in this group, 
-                            // check if we need to shorten it
+                            // check if we need to shorten it based on the reach duration
                             if (lastToneByValue.ContainsKey(toneValue))
                             {
                                 var previousToneIndex = lastToneByValue[toneValue];
@@ -88,9 +91,9 @@ namespace MathToMusic.Processors
                                     int positionsSinceLastTone = i - previousToneIndex;
                                     int timeSinceLastTone = positionsSinceLastTone * baseDurationMilliseconds;
 
-                                    // If the current tone (same value) starts before the previous tone would naturally end,
+                                    // If the current tone (same value) starts before the previous tone's reach would naturally end,
                                     // shorten the previous tone's duration
-                                    if (timeSinceLastTone < previousTone.Duration.TotalMilliseconds)
+                                    if (timeSinceLastTone < maxReachDuration)
                                     {
                                         var shortenedTone = new Tone
                                         {
@@ -102,23 +105,53 @@ namespace MathToMusic.Processors
                                 }
                             }
 
-                            track.Add(new Tone(baseToneHz * toneValue, duration));
+                            // Calculate duration for this tone: 
+                            // Start with base duration, extend up to max reach if no interruption
+                            int actualDuration = baseDuration;
+                            
+                            // Look ahead to see if same tone value appears later
+                            int nextSameTonePosition = -1;
+                            for (int j = i + 1; j < processedSequence.Length; j++)
+                            {
+                                if (toneMap.TryGetValue(processedSequence[j], out var futureValue) && 
+                                    futureValue == toneValue && group.ToneValues.Contains(futureValue))
+                                {
+                                    nextSameTonePosition = j;
+                                    break;
+                                }
+                            }
+                            
+                            if (nextSameTonePosition > 0)
+                            {
+                                // Calculate time until next same tone
+                                int timeUntilNext = (nextSameTonePosition - i) * baseDurationMilliseconds;
+                                actualDuration = Math.Min(maxReachDuration, timeUntilNext);
+                            }
+                            else
+                            {
+                                // No future same tone, use maximum reach but don't exceed sequence end
+                                int remainingTime = (processedSequence.Length - i) * baseDurationMilliseconds;
+                                actualDuration = Math.Min(maxReachDuration, remainingTime);
+                            }
+
+                            track.Add(new Tone(baseToneHz * toneValue, actualDuration));
                             lastToneByValue[toneValue] = track.Count - 1; // Update last occurrence index for this tone value
                         }
                         else
                         {
-                            // Add silence for tones not in this octave group
-                            int duration = baseDurationMilliseconds * group.DurationMultiplier;
-                            track.Add(new Tone(0, duration)); // 0 frequency = silence
+                            // Add silence for tones not in this octave group - use base duration only
+                            track.Add(new Tone(0, baseDurationMilliseconds)); // 0 frequency = silence
                         }
                     }
                 }
 
-                // Always add a sequence for each octave group, even if empty
+                // Calculate total duration as the sum of all base durations (timeline synchronization)
+                int totalSequenceDuration = processedSequence.Length * baseDurationMilliseconds;
+
                 sequences.Add(new Sequiention()
                 {
                     Tones = track,
-                    TotalDuration = TimeSpan.FromMilliseconds(track.Sum(t => t.Duration.TotalMilliseconds)),
+                    TotalDuration = TimeSpan.FromMilliseconds(totalSequenceDuration),
                     Title = $"Octave_{group.Name}"
                 });
             }
