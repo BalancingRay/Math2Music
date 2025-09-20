@@ -31,7 +31,12 @@ namespace MathToMusic.Processors
 
         public IList<Sequiention> Process(string numericSequention, NumberFormats outputFormat, NumberFormats inputFormat)
         {
+            if (CommonNumbers.Collection.TryGetValue(numericSequention, out string commonNumber))
+            {
+                numericSequention = commonNumber;
+            }
             // Convert input if formats differ
+
             string processedSequence = numericSequention;
             if (inputFormat != outputFormat)
             {

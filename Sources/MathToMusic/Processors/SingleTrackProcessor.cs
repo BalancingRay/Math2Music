@@ -32,7 +32,10 @@ namespace MathToMusic.Processors
         IList<Sequiention> ITonesProcessor.Process(string numericSequention, NumberFormats outputFormat, NumberFormats inputFormat)
         {
             var track = new List<Tone>();
-
+            if (CommonNumbers.Collection.TryGetValue(numericSequention, out string commonNumber))
+            {
+                numericSequention = commonNumber;
+            }
             if (inputFormat == outputFormat)
             {
                 // Same format - process each character directly

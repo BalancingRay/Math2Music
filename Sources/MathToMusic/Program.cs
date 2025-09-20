@@ -4,7 +4,6 @@ using MathToMusic.Contracts;
 using MathToMusic.Models;
 using MathToMusic.Outputs;
 using MathToMusic.Processors;
-using MathToMusic.Utils;
 
 
 char[] decimalDelimiter = new char[] { ',', '.' };
@@ -47,12 +46,10 @@ while (true)
             .ToArray();
     }
 
-    if (CommonNumbers.Collection.TryGetValue(input, out string commonNumber))
-    {
-        input = commonNumber;
-    }
-
-    var singleProcessor = new ReachSingleTrackProcessor();
+    Console.WriteLine("Do you prefere to use reach sound processor: Y / N (skip) ?");
+    string yes = "y";
+    var userInput = Console.ReadLine();
+    ITonesProcessor singleProcessor = yes.Equals(userInput, StringComparison.OrdinalIgnoreCase) ? new ReachSingleTrackProcessor() : new SingleTrackProcessor();
     // Choose processor based on whether input contains + operator for polyphonic processing
     ITonesProcessor processor = ExpressionParser.IsPolyphonic(input)
         ? new MultiTrackProcessor(singleProcessor)
