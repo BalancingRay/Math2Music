@@ -51,7 +51,10 @@ while (true)
         input = commonNumber;
     }
 
-    ITonesProcessor processor = new SingleTrackProcessor();
+    // Choose processor based on whether input contains + operator for polyphonic processing
+    ITonesProcessor processor = ExpressionParser.IsPolyphonic(input) 
+        ? new MultiTrackProcessor() 
+        : new SingleTrackProcessor();
     ITonesOutput output = new BeepOutput();
     foreach (var outputFormat in outFormats)
     {
