@@ -80,6 +80,14 @@ while (true)
         Console.WriteLine($"Result: ");
         //Console.WriteLine(resultBuilder.ToString());
     }
+    
+    // Ask if user wants to continue
+    Console.WriteLine("Process another number? (y/n, or press Enter to exit)");
+    string? continueChoice = Console.ReadLine();
+    if (string.IsNullOrEmpty(continueChoice) || continueChoice.ToLower() != "y")
+    {
+        break;
+    }
 }
 
 
