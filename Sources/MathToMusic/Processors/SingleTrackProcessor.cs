@@ -2,7 +2,7 @@ using MathToMusic.Contracts;
 using MathToMusic.Models;
 using MathToMusic.Utils;
 
-namespace MathToMusic
+namespace MathToMusic.Processors
 {
     public class SingleTrackProcessor : ITonesProcessor
     {
@@ -32,7 +32,7 @@ namespace MathToMusic
         IList<Sequiention> ITonesProcessor.Process(string numericSequention, NumberFormats outputFormat, NumberFormats inputFormat)
         {
             var track = new List<Tone>();
-            
+
             if (inputFormat == outputFormat)
             {
                 // Same format - process each character directly
@@ -65,7 +65,7 @@ namespace MathToMusic
                     try
                     {
                         string convertedSequence = NumberConverter.Convert(numericSequention, inputFormat, outputFormat);
-                        
+
                         // Process each character of the converted sequence
                         for (var i = 0; i < convertedSequence.Length; i++)
                         {

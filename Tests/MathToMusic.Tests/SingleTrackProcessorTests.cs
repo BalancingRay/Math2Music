@@ -1,7 +1,7 @@
-using NUnit.Framework;
-using MathToMusic;
 using MathToMusic.Contracts;
 using MathToMusic.Models;
+using MathToMusic.Processors;
+using NUnit.Framework;
 
 namespace MathToMusic.Tests
 {
@@ -21,16 +21,16 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "123";
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Has.Count.EqualTo(1));
             Assert.That(result[0].Title, Is.EqualTo("Single"));
             Assert.That(result[0].Tones, Has.Count.EqualTo(3));
-            
+
             // Check tone values: '1'=1, '2'=2, '3'=3
             Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // base 180Hz * 1
             Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 2)); // base 180Hz * 2  
@@ -42,14 +42,14 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "ABC";
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Hex, NumberFormats.Hex);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result[0].Tones, Has.Count.EqualTo(3));
-            
+
             // Check tone values: 'A'=10, 'B'=11, 'C'=12
             Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 10));
             Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 11));
@@ -61,10 +61,10 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "1G2"; // G is invalid for decimal
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
-            
+
             // Assert
             Assert.That(result[0].Tones, Has.Count.EqualTo(2)); // Only '1' and '2' should produce tones
         }
@@ -74,10 +74,10 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "";
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
-            
+
             // Assert
             Assert.That(result[0].Tones, Has.Count.EqualTo(0));
         }
@@ -87,14 +87,14 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "10101111"; // Binary that converts to AF in hex
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Hex, NumberFormats.Bin);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result[0].Tones, Has.Count.EqualTo(2));
-            
+
             // The algorithm processes right-to-left: 1111 (F=15) then 1010 (A=10)
             // But inserts at position 0, so the order becomes F, A
             Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 15)); // 'F'
@@ -106,14 +106,14 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "101011"; // Binary: processes right-to-left in groups of 3
-            
+
             // Act  
             var result = _processor.Process(input, NumberFormats.Oct, NumberFormats.Bin);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result[0].Tones, Has.Count.EqualTo(2));
-            
+
             // The algorithm processes right-to-left: 011 (3) then 101 (5)
             // Results in tones for 3, then 5
             Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 3)); // '3'
@@ -126,10 +126,10 @@ namespace MathToMusic.Tests
             // Arrange
             string input = "12";
             int baseDuration = 300; // milliseconds per tone
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
-            
+
             // Assert
             Assert.That(result[0].TotalDuration.TotalMilliseconds, Is.EqualTo(baseDuration * 2));
         }
@@ -140,10 +140,10 @@ namespace MathToMusic.Tests
             // Arrange
             string input = "123";
             int expectedDuration = 300;
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
-            
+
             // Assert
             foreach (var tone in result[0].Tones)
             {
@@ -156,14 +156,14 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "10"; // Decimal 10 should convert to binary 1010
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Bin, NumberFormats.Dec);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result[0].Tones, Has.Count.EqualTo(4)); // "1010" has 4 characters
-            
+
             // Check tone values: '1'=1, '0'=0, '1'=1, '0'=0
             Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // '1'
             Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 0)); // '0' 
@@ -176,14 +176,14 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "1010"; // Binary 1010 should convert to decimal 10
-            
+
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Bin);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result[0].Tones, Has.Count.EqualTo(2)); // "10" has 2 characters
-            
+
             // Check tone values: '1'=1, '0'=0
             Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // '1'
             Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 0)); // '0'

@@ -1,6 +1,7 @@
 using MathToMusic.Contracts;
 using MathToMusic.Models;
 using MathToMusic.Outputs;
+using MathToMusic.Processors;
 using NUnit.Framework;
 
 namespace MathToMusic.Tests

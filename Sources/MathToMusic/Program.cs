@@ -3,6 +3,7 @@ using MathToMusic;
 using MathToMusic.Contracts;
 using MathToMusic.Models;
 using MathToMusic.Outputs;
+using MathToMusic.Processors;
 using MathToMusic.Utils;
 
 
@@ -51,10 +52,11 @@ while (true)
         input = commonNumber;
     }
 
+    var singleProcessor = new ReachSingleTrackProcessor();
     // Choose processor based on whether input contains + operator for polyphonic processing
     ITonesProcessor processor = ExpressionParser.IsPolyphonic(input)
-        ? new MultiTrackProcessor()
-        : new SingleTrackProcessor();
+        ? new MultiTrackProcessor(singleProcessor)
+        : singleProcessor;
     ITonesOutput output = new WavFileOutput();
     foreach (var outputFormat in outFormats)
     {

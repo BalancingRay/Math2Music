@@ -2,7 +2,7 @@ using MathToMusic.Contracts;
 using MathToMusic.Models;
 using MathToMusic.Utils;
 
-namespace MathToMusic
+namespace MathToMusic.Processors
 {
     public class ReachSingleTrackProcessor : ITonesProcessor
     {
@@ -61,7 +61,7 @@ namespace MathToMusic
             foreach (var group in octaveGroups)
             {
                 var track = new List<Tone>();
-                
+
                 for (var i = 0; i < processedSequence.Length; i++)
                 {
                     if (toneMap.TryGetValue(processedSequence[i], out var toneValue))

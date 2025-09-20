@@ -1,7 +1,7 @@
 using MathToMusic.Contracts;
 using MathToMusic.Models;
 
-namespace MathToMusic
+namespace MathToMusic.Processors
 {
     /// <summary>
     /// Processor for handling polyphonic expressions with + operator
@@ -9,7 +9,12 @@ namespace MathToMusic
     /// </summary>
     public class MultiTrackProcessor : ITonesProcessor
     {
-        private readonly SingleTrackProcessor _singleTrackProcessor;
+        private readonly ITonesProcessor _singleTrackProcessor;
+
+        public MultiTrackProcessor(ITonesProcessor singleTrackProcessor)
+        {
+            _singleTrackProcessor = singleTrackProcessor;
+        }
 
         public MultiTrackProcessor()
         {

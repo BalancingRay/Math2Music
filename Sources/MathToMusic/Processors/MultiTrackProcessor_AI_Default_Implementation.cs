@@ -1,7 +1,7 @@
 using MathToMusic.Contracts;
 using MathToMusic.Models;
 
-namespace MathToMusic
+namespace MathToMusic.Processors
 {
     public class MultiTrackProcessor_AI_Default_Implementation : ITonesProcessor
     {
@@ -42,7 +42,7 @@ namespace MathToMusic
                 return null;
 
             var originalTrack = singleTrackResult[0];
-            
+
             // Adjust frequencies for this track
             var adjustedTones = new List<Tone>();
             foreach (var tone in originalTrack.Tones)
