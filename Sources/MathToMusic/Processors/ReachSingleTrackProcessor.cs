@@ -76,7 +76,7 @@ namespace MathToMusic.Processors
                         if (group.ToneValues.Contains(toneValue))
                         {
                             int duration = baseDurationMilliseconds * group.DurationMultiplier;
-                            
+
                             // If there was a previous occurrence of the same tone value in this group, 
                             // check if we need to shorten it
                             if (lastToneByValue.ContainsKey(toneValue))
@@ -87,7 +87,7 @@ namespace MathToMusic.Processors
                                     var previousTone = track[previousToneIndex];
                                     int positionsSinceLastTone = i - previousToneIndex;
                                     int timeSinceLastTone = positionsSinceLastTone * baseDurationMilliseconds;
-                                    
+
                                     // If the current tone (same value) starts before the previous tone would naturally end,
                                     // shorten the previous tone's duration
                                     if (timeSinceLastTone < previousTone.Duration.TotalMilliseconds)
@@ -136,6 +136,12 @@ namespace MathToMusic.Processors
                     new OctaveGroup("MidLow", new[] { 2, 3 }, 4),
                     new OctaveGroup("MidHigh", new[] { 4, 5, 6, 7 }, 2),
                     new OctaveGroup("High", new[] { 8, 9, 10, 11, 12, 13, 14, 15 }, 1)
+                },
+                NumberFormats.Dec => new List<OctaveGroup>
+                {
+                    new OctaveGroup("Low", new[] { 1 }, 4),
+                    new OctaveGroup("MidLow", new[] { 2, 3 }, 2),
+                    new OctaveGroup("High", new[] { 4, 5, 6, 7, 8, 9 }, 1),
                 },
                 NumberFormats.Oct => new List<OctaveGroup>
                 {
