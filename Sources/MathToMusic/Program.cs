@@ -51,8 +51,15 @@ while (true)
         input = commonNumber;
     }
 
-    ITonesProcessor processor = new SingleTrackProcessor();
-    ITonesOutput output = new BeepOutput();
+    // Ask user for processing preference
+    Console.WriteLine("Choose processing method: 1 for single track (monophonic), 2 for multi track (polyphonic)");
+    string? processingChoice = Console.ReadLine();
+    ITonesProcessor processor = processingChoice == "2" ? new MultiTrackProcessor() : new SingleTrackProcessor();
+    
+    // Ask user for output preference
+    Console.WriteLine("Choose output method: 1 for Beep (console), 2 for WAV file");
+    string? outputChoice = Console.ReadLine();
+    ITonesOutput output = outputChoice == "2" ? new WavFileOutput() : new BeepOutput();
     foreach (var outputFormat in outFormats)
     {
         var song = processor.Process(input, outputFormat, inputFormat);
