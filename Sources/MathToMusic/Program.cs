@@ -6,9 +6,6 @@ using MathToMusic.Models;
 using MathToMusic.Utils;
 
 
-int intPartSize = 4;
-int decimalpartSize = 4;
-int delimiterSize = 1;
 char[] decimalDelimiter = new char[] { ',', '.' };
 Console.WriteLine("Hello! It's Math To Music converter v1.");
 NumberFormats inputFormat = NumberFormats.Dec;
@@ -75,23 +72,6 @@ while (true)
 
         Console.WriteLine($"Result: ");
         //Console.WriteLine(resultBuilder.ToString());
-    }
-}
-
-
-int GetSize(int delimiter, int currentPosition)
-{
-    if (currentPosition < delimiter)
-    {
-        return intPartSize;
-    }
-    else if (currentPosition == delimiter)
-    {
-        return delimiterSize;
-    }
-    else
-    {
-        return decimalpartSize;
     }
 }
 

@@ -32,8 +32,10 @@ namespace MathToMusic
         IList<Sequiention> ITonesProcessor.Process(string numericSequention, NumberFormats outputFormat, NumberFormats inputFormat)
         {
             var track = new List<Tone>();
+            
             if (inputFormat == outputFormat)
             {
+                // Same format - process each character directly
                 for (var i = 0; i < numericSequention.Length; i++)
                 {
                     if (toneMap.TryGetValue(numericSequention[i], out var tone))
@@ -42,29 +44,53 @@ namespace MathToMusic
                     }
                 }
             }
-            else if (inputFormat is NumberFormats.Bin
-                && outputFormat is not NumberFormats.Dec)
+            else
             {
-                // Use the NumberConverter utility to convert binary with grouping
-                var convertedChars = NumberConverter.ConvertBinaryWithGrouping(numericSequention, outputFormat);
-                foreach (var convertedChar in convertedChars)
+                // Different formats - handle conversions
+                if (inputFormat == NumberFormats.Bin && outputFormat != NumberFormats.Dec)
                 {
-                    if (toneMap.TryGetValue(convertedChar, out var convertedTone))
+                    // For binary input to non-decimal output, use the specific grouping method to maintain compatibility
+                    var convertedChars = NumberConverter.ConvertBinaryWithGrouping(numericSequention, outputFormat);
+                    foreach (var convertedChar in convertedChars)
                     {
-                        track.Add(new Tone(baseToneHz * convertedTone, baseDurationMilliseconds));
+                        if (toneMap.TryGetValue(convertedChar, out var convertedTone))
+                        {
+                            track.Add(new Tone(baseToneHz * convertedTone, baseDurationMilliseconds));
+                        }
+                    }
+                }
+                else
+                {
+                    // For all other conversions (including decimal conversions), use the enhanced Convert method
+                    try
+                    {
+                        string convertedSequence = NumberConverter.Convert(numericSequention, inputFormat, outputFormat);
+                        
+                        // Process each character of the converted sequence
+                        for (var i = 0; i < convertedSequence.Length; i++)
+                        {
+                            if (toneMap.TryGetValue(convertedSequence[i], out var tone))
+                            {
+                                track.Add(new Tone(baseToneHz * tone, baseDurationMilliseconds));
+                            }
+                        }
+                    }
+                    catch (ArgumentException)
+                    {
+                        // If conversion fails, leave track empty
                     }
                 }
             }
 
             var song = new List<Sequiention>()
-        {
-            new Sequiention()
             {
-                Tones = track,
-                TotalDuration = TimeSpan.FromMilliseconds(track.Sum(t=> t.Duration.TotalMilliseconds)),
-                Title = "Single"
-            }
-        };
+                new Sequiention()
+                {
+                    Tones = track,
+                    TotalDuration = TimeSpan.FromMilliseconds(track.Sum(t=> t.Duration.TotalMilliseconds)),
+                    Title = "Single"
+                }
+            };
             return song;
         }
     }
