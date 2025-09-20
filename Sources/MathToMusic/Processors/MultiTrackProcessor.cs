@@ -54,13 +54,16 @@ namespace MathToMusic.Processors
                 var partSequences = processor.Process(part, outputFormat, inputFormat);
                 if (partSequences != null && partSequences.Count > 0)
                 {
-                    sequences.Add(partSequences[0]); // SingleTrackProcessor returns exactly one sequence
+                    sequences.AddRange(partSequences);
                 }
             }
 
+            return sequences;
+
+            // For AI agent: Actually for now abc+def used as two sequentions for sound outputs
             // Combine all sequences harmonically into a single sequence
-            var combinedSequence = HarmonicCombiner.CombineHarmonically(sequences);
-            return new List<Sequiention> { combinedSequence };
+            //var combinedSequence = HarmonicCombiner.CombineHarmonically(sequences);
+            //return new List<Sequiention> { combinedSequence };
         }
     }
 }

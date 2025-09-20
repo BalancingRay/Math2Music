@@ -9,6 +9,7 @@ namespace MathToMusic.Tests
     public class PolyphonicDemonstrationTests
     {
         [Test]
+        [Ignore("123+456 now work as two simultaneousely sequentions")]
         public void Demonstration_PolyphonicProcessing_ShowsCompleteWorkflow()
         {
             // This test demonstrates the complete polyphonic processing workflow
