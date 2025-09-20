@@ -1,8 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using MathToMusic;
 using MathToMusic.Contracts;
-using MathToMusic.Inputs;
 using MathToMusic.Models;
+using MathToMusic.Outputs;
 using MathToMusic.Utils;
 
 
@@ -52,10 +52,10 @@ while (true)
     }
 
     // Choose processor based on whether input contains + operator for polyphonic processing
-    ITonesProcessor processor = ExpressionParser.IsPolyphonic(input) 
-        ? new MultiTrackProcessor() 
+    ITonesProcessor processor = ExpressionParser.IsPolyphonic(input)
+        ? new MultiTrackProcessor()
         : new SingleTrackProcessor();
-    ITonesOutput output = new BeepOutput();
+    ITonesOutput output = new WavFileOutput();
     foreach (var outputFormat in outFormats)
     {
         var song = processor.Process(input, outputFormat, inputFormat);

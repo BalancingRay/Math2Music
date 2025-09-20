@@ -1,6 +1,6 @@
-using NUnit.Framework;
 using MathToMusic.Contracts;
-using MathToMusic.Inputs;
+using MathToMusic.Outputs;
+using NUnit.Framework;
 
 namespace MathToMusic.Tests
 {
@@ -14,21 +14,21 @@ namespace MathToMusic.Tests
         public void Setup()
         {
             _wavOutput = new WavFileOutput();
-            
+
             // Use a temporary directory for testing
             _testResultsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Results");
-            
+
             // Clean up any existing test files
             if (Directory.Exists(_testResultsPath))
             {
                 foreach (var file in Directory.GetFiles(_testResultsPath, "*.wav"))
                 {
-                    try 
-                    { 
-                        File.Delete(file); 
+                    try
+                    {
+                        File.Delete(file);
                     }
-                    catch 
-                    { 
+                    catch
+                    {
                         // Ignore if file is in use
                     }
                 }
@@ -43,12 +43,12 @@ namespace MathToMusic.Tests
             {
                 foreach (var file in Directory.GetFiles(_testResultsPath, "*.wav"))
                 {
-                    try 
-                    { 
-                        File.Delete(file); 
+                    try
+                    {
+                        File.Delete(file);
                     }
-                    catch 
-                    { 
+                    catch
+                    {
                         // Ignore if file is in use
                     }
                 }
@@ -79,7 +79,7 @@ namespace MathToMusic.Tests
             Assert.That(Directory.Exists(_testResultsPath), Is.True);
             var wavFiles = Directory.GetFiles(_testResultsPath, "mono_*.wav");
             Assert.That(wavFiles.Length, Is.GreaterThan(0));
-            
+
             // Verify file is not empty and has reasonable size
             var fileInfo = new FileInfo(wavFiles[0]);
             Assert.That(fileInfo.Length, Is.GreaterThan(100)); // Should have WAV header + data
@@ -91,8 +91,8 @@ namespace MathToMusic.Tests
             // Arrange
             var sequence1 = new Sequiention
             {
-                Tones = new List<Tone> 
-                { 
+                Tones = new List<Tone>
+                {
                     new Tone(440.0, 1000), // A4
                     new Tone(523.25, 1000) // C5
                 },
@@ -101,8 +101,8 @@ namespace MathToMusic.Tests
             };
             var sequence2 = new Sequiention
             {
-                Tones = new List<Tone> 
-                { 
+                Tones = new List<Tone>
+                {
                     new Tone(329.63, 1000), // E4
                     new Tone(659.25, 1000)  // E5
                 },
@@ -118,7 +118,7 @@ namespace MathToMusic.Tests
             Assert.That(Directory.Exists(_testResultsPath), Is.True);
             var wavFiles = Directory.GetFiles(_testResultsPath, "poly_*.wav");
             Assert.That(wavFiles.Length, Is.GreaterThan(0));
-            
+
             // Verify file is not empty and has reasonable size
             var fileInfo = new FileInfo(wavFiles[0]);
             Assert.That(fileInfo.Length, Is.GreaterThan(100)); // Should have WAV header + data
@@ -146,7 +146,7 @@ namespace MathToMusic.Tests
         {
             // Arrange & Act & Assert
             Assert.DoesNotThrow(() => _wavOutput.Send(null));
-            
+
             if (Directory.Exists(_testResultsPath))
             {
                 var wavFiles = Directory.GetFiles(_testResultsPath, "*.wav");
@@ -174,7 +174,7 @@ namespace MathToMusic.Tests
 
             // Act & Assert
             Assert.DoesNotThrow(() => _wavOutput.Send(input));
-            
+
             var wavFiles = Directory.GetFiles(_testResultsPath, "mono_*.wav");
             Assert.That(wavFiles.Length, Is.GreaterThan(0));
         }
@@ -245,8 +245,8 @@ namespace MathToMusic.Tests
             };
             var longSequence = new Sequiention
             {
-                Tones = new List<Tone> 
-                { 
+                Tones = new List<Tone>
+                {
                     new Tone(523.25, 1000), // 1 second
                     new Tone(659.25, 1000)  // 1 second
                 },
@@ -257,7 +257,7 @@ namespace MathToMusic.Tests
 
             // Act & Assert
             Assert.DoesNotThrow(() => _wavOutput.Send(input));
-            
+
             var wavFiles = Directory.GetFiles(_testResultsPath, "poly_*.wav");
             Assert.That(wavFiles.Length, Is.GreaterThan(0));
 

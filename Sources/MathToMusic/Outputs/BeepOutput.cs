@@ -1,6 +1,6 @@
 ﻿using MathToMusic.Contracts;
 
-namespace MathToMusic.Inputs
+namespace MathToMusic.Outputs
 {
     internal class BeepOutput : ITonesOutput
     {
@@ -12,13 +12,13 @@ namespace MathToMusic.Inputs
                 for (var i = 0; i < track.Count; i++)
                 {
                     var tone = track[i];
-                    
+
                     // Handle chords (multiple frequencies) by playing them in quick succession
                     if (tone.ObertonFrequencies?.Length > 1)
                     {
                         // Calculate duration per frequency for chords
                         int durationPerFreq = Math.Max(50, (int)(tone.Duration.TotalMilliseconds / tone.ObertonFrequencies.Length));
-                        
+
                         foreach (var frequency in tone.ObertonFrequencies)
                         {
                             if (frequency == 0)
