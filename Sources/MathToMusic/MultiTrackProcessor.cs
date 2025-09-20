@@ -1,8 +1,5 @@
 using MathToMusic.Contracts;
 using MathToMusic.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace MathToMusic
 {
@@ -33,7 +30,7 @@ namespace MathToMusic
 
             // Parse the expression into individual parts
             string[] parts = ExpressionParser.ParseExpression(numericSequention);
-            
+
             if (parts.Length == 0)
                 return new List<Sequiention> { new Sequiention { Tones = new List<Tone>(), Title = "Empty", TotalDuration = TimeSpan.Zero } };
 
@@ -48,11 +45,7 @@ namespace MathToMusic
                     sequences.Add(partSequences[0]); // SingleTrackProcessor returns exactly one sequence
                 }
             }
-
-            // Combine all sequences harmonically
-            var harmonicSequence = HarmonicCombiner.CombineHarmonically(sequences);
-            
-            return new List<Sequiention> { harmonicSequence };
+            return sequences;
         }
     }
 }
