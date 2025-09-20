@@ -39,6 +39,13 @@ namespace MathToMusic.Processors
             if (parts.Length == 0)
                 return new List<Sequiention> { new Sequiention { Tones = new List<Tone>(), Title = "Empty", TotalDuration = TimeSpan.Zero } };
 
+            if (parts.Length == 1)
+            {
+                // Not polyphonic, just process as single track
+                var singleResult = _singleTrackProcessor.Process(parts[0], outputFormat, inputFormat);
+                return singleResult;
+            }
+
             // Process each part independently using SingleTrackProcessor through interface
             var sequences = new List<Sequiention>();
             foreach (string part in parts)
@@ -50,7 +57,10 @@ namespace MathToMusic.Processors
                     sequences.Add(partSequences[0]); // SingleTrackProcessor returns exactly one sequence
                 }
             }
-            return sequences;
+
+            // Combine all sequences harmonically into a single sequence
+            var combinedSequence = HarmonicCombiner.CombineHarmonically(sequences);
+            return new List<Sequiention> { combinedSequence };
         }
     }
 }
