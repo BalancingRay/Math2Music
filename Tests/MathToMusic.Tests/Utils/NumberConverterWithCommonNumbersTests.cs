@@ -138,15 +138,20 @@ namespace MathToMusic.Tests.Utils
         }
 
         [Test]
-        public void Convert_DecimalFormat_ThrowsExpectedException()
+        public void Convert_DecimalFormat_NowSupported()
         {
-            // Verify that decimal format is not supported as per requirements
+            // Verify that decimal format is now supported
             string binaryInput = "1010101010101010101010";
             
-            Assert.Throws<ArgumentException>(() => 
+            Assert.DoesNotThrow(() => 
                 NumberConverter.Convert("123456789012345", NumberFormats.Dec, NumberFormats.Bin));
-            Assert.Throws<ArgumentException>(() => 
+            Assert.DoesNotThrow(() => 
                 NumberConverter.Convert(binaryInput, NumberFormats.Bin, NumberFormats.Dec));
+                
+            // Test actual conversions work correctly
+            string decResult = NumberConverter.Convert(binaryInput, NumberFormats.Bin, NumberFormats.Dec);
+            string binResult = NumberConverter.Convert(decResult, NumberFormats.Dec, NumberFormats.Bin);
+            Assert.That(binResult, Is.EqualTo(binaryInput));
         }
 
         // Tests for new large number conversion functionality using CommonNumbers data

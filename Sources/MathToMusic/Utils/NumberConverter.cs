@@ -7,8 +7,9 @@ namespace MathToMusic.Utils
     {
         /// <summary>
         /// Convert a number string from one format to another (supports very long strings)
-        /// Currently supports only binary-based formats: Bin, Qad, Oct, Hex
-        /// Uses binary as intermediate format for conversions between different bases
+        /// Supports all number formats: Bin, Qad, Oct, Dec, Hex
+        /// Uses binary as intermediate format for conversions between non-decimal bases
+        /// Uses direct conversion for decimal format conversions
         /// </summary>
         /// <param name="input">Input number string</param>
         /// <param name="fromFormat">Source number format</param>
@@ -26,7 +27,13 @@ namespace MathToMusic.Utils
             ValidateSupportedFormat(fromFormat);
             ValidateSupportedFormat(toFormat);
 
-            // Use binary as intermediate format
+            // Handle conversions involving decimal format using ConvertLarge method
+            if (fromFormat == NumberFormats.Dec || toFormat == NumberFormats.Dec)
+            {
+                return ConvertWithDecimal(input, fromFormat, toFormat);
+            }
+
+            // For binary-based formats, use binary as intermediate format
             string binaryString = fromFormat == NumberFormats.Bin ? input : ConvertToBinary(input, fromFormat);
             
             if (toFormat == NumberFormats.Bin)
@@ -36,15 +43,52 @@ namespace MathToMusic.Utils
         }
 
         /// <summary>
+        /// Handle conversions involving decimal format
+        /// </summary>
+        /// <param name="input">Input number string</param>
+        /// <param name="fromFormat">Source number format</param>
+        /// <param name="toFormat">Target number format</param>
+        /// <returns>Converted number string</returns>
+        private static string ConvertWithDecimal(string input, NumberFormats fromFormat, NumberFormats toFormat)
+        {
+            // Direct Dec <-> Bin conversion using ConvertLarge
+            if ((fromFormat == NumberFormats.Dec && toFormat == NumberFormats.Bin) ||
+                (fromFormat == NumberFormats.Bin && toFormat == NumberFormats.Dec))
+            {
+                return ConvertLarge(input, fromFormat, toFormat);
+            }
+
+            // For Dec -> other formats: Dec -> Bin -> target format
+            if (fromFormat == NumberFormats.Dec)
+            {
+                string binaryIntermediate = ConvertLarge(input, NumberFormats.Dec, NumberFormats.Bin);
+                if (toFormat == NumberFormats.Bin)
+                    return binaryIntermediate;
+                return ConvertFromBinary(binaryIntermediate, toFormat);
+            }
+
+            // For other formats -> Dec: source format -> Bin -> Dec
+            if (toFormat == NumberFormats.Dec)
+            {
+                string binaryIntermediate = fromFormat == NumberFormats.Bin ? input : ConvertToBinary(input, fromFormat);
+                return ConvertLarge(binaryIntermediate, NumberFormats.Bin, NumberFormats.Dec);
+            }
+
+            // This should not be reached, but included for completeness
+            throw new ArgumentException($"Unsupported conversion from {fromFormat} to {toFormat}");
+        }
+
+        /// <summary>
         /// Validate that the format is supported by the string-based conversion
         /// </summary>
         /// <param name="format">Number format to validate</param>
         /// <exception cref="ArgumentException">Thrown if format is not supported</exception>
         private static void ValidateSupportedFormat(NumberFormats format)
         {
-            if (format == NumberFormats.Dec)
+            // All formats are now supported: Bin, Qad, Oct, Dec, Hex
+            if (!Enum.IsDefined(typeof(NumberFormats), format))
             {
-                throw new ArgumentException("Decimal format is not supported in current implementation. Use binary-based formats (Bin, Qad, Oct, Hex).");
+                throw new ArgumentException($"Unsupported number format: {format}");
             }
         }
 
@@ -319,93 +363,7 @@ namespace MathToMusic.Utils
             return string.IsNullOrEmpty(binaryResult) ? "0" : binaryResult;
         }
 
-        /// <summary>
-        /// Convert from any supported format to decimal (LEGACY - for backward compatibility only)
-        /// For new code, use Convert method with binary as intermediate format
-        /// </summary>
-        /// <param name="input">Input number string</param>
-        /// <param name="fromFormat">Source number format</param>
-        /// <returns>Decimal value</returns>
-        [Obsolete("This method is kept for backward compatibility. Use Convert method for new code.")]
-        public static long ConvertToDecimal(string input, NumberFormats fromFormat)
-        {
-            if (string.IsNullOrEmpty(input))
-                return 0;
 
-            return fromFormat switch
-            {
-                NumberFormats.Bin => System.Convert.ToInt64(input, 2),
-                NumberFormats.Oct => System.Convert.ToInt64(input, 8),
-                NumberFormats.Dec => System.Convert.ToInt64(input, 10),
-                NumberFormats.Hex => System.Convert.ToInt64(input, 16),
-                NumberFormats.Qad => ConvertQuaternaryToDecimalLegacy(input),
-                _ => throw new ArgumentException($"Unsupported format: {fromFormat}")
-            };
-        }
-
-        /// <summary>
-        /// Convert from decimal to any supported format (LEGACY - for backward compatibility only)
-        /// For new code, use Convert method with binary as intermediate format
-        /// </summary>
-        /// <param name="decimalValue">Decimal value to convert</param>
-        /// <param name="toFormat">Target number format</param>
-        /// <returns>Converted number string</returns>
-        [Obsolete("This method is kept for backward compatibility. Use Convert method for new code.")]
-        public static string ConvertFromDecimal(long decimalValue, NumberFormats toFormat)
-        {
-            return toFormat switch
-            {
-                NumberFormats.Bin => System.Convert.ToString(decimalValue, 2),
-                NumberFormats.Oct => System.Convert.ToString(decimalValue, 8),
-                NumberFormats.Dec => decimalValue.ToString(),
-                NumberFormats.Hex => System.Convert.ToString(decimalValue, 16).ToUpper(),
-                NumberFormats.Qad => ConvertDecimalToQuaternaryLegacy(decimalValue),
-                _ => throw new ArgumentException($"Unsupported format: {toFormat}")
-            };
-        }
-
-        /// <summary>
-        /// Convert quaternary string to decimal (LEGACY - for backward compatibility only)
-        /// </summary>
-        /// <param name="quaternaryInput">Quaternary input string</param>
-        /// <returns>Decimal value</returns>
-        private static long ConvertQuaternaryToDecimalLegacy(string quaternaryInput)
-        {
-            long result = 0;
-            long baseValue = 1;
-
-            for (int i = quaternaryInput.Length - 1; i >= 0; i--)
-            {
-                int digit = quaternaryInput[i] - '0';
-                if (digit < 0 || digit > 3)
-                    throw new ArgumentException($"Invalid quaternary digit: {quaternaryInput[i]}");
-                
-                result += digit * baseValue;
-                baseValue *= 4;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Convert decimal to quaternary string (LEGACY - for backward compatibility only)
-        /// </summary>
-        /// <param name="decimalValue">Decimal value to convert</param>
-        /// <returns>Quaternary string</returns>
-        private static string ConvertDecimalToQuaternaryLegacy(long decimalValue)
-        {
-            if (decimalValue == 0)
-                return "0";
-
-            var result = new System.Text.StringBuilder();
-            while (decimalValue > 0)
-            {
-                result.Insert(0, (decimalValue % 4).ToString());
-                decimalValue /= 4;
-            }
-
-            return result.ToString();
-        }
 
         /// <summary>
         /// Convert a very long binary string to decimal format using BigInteger

@@ -150,5 +150,43 @@ namespace MathToMusic.Tests
                 Assert.That(tone.Duration.TotalMilliseconds, Is.EqualTo(expectedDuration));
             }
         }
+
+        [Test]
+        public void Process_DecimalToBinary_ConvertsCorrectly()
+        {
+            // Arrange
+            string input = "10"; // Decimal 10 should convert to binary 1010
+            
+            // Act
+            var result = _processor.Process(input, NumberFormats.Bin, NumberFormats.Dec);
+            
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result[0].Tones, Has.Count.EqualTo(4)); // "1010" has 4 characters
+            
+            // Check tone values: '1'=1, '0'=0, '1'=1, '0'=0
+            Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // '1'
+            Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 0)); // '0' 
+            Assert.That(result[0].Tones[2].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // '1'
+            Assert.That(result[0].Tones[3].ObertonFrequencies[0], Is.EqualTo(180 * 0)); // '0'
+        }
+
+        [Test]
+        public void Process_BinaryToDecimal_ConvertsCorrectly()
+        {
+            // Arrange
+            string input = "1010"; // Binary 1010 should convert to decimal 10
+            
+            // Act
+            var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Bin);
+            
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result[0].Tones, Has.Count.EqualTo(2)); // "10" has 2 characters
+            
+            // Check tone values: '1'=1, '0'=0
+            Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // '1'
+            Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 0)); // '0'
+        }
     }
 }

@@ -45,13 +45,7 @@ namespace MathToMusic.Tests.Utils
             return NumberConverter.Convert(input, from, to);
         }
 
-        [Test]
-        public void Convert_DecimalFormat_ThrowsArgumentException()
-        {
-            // Test that decimal format is not supported
-            Assert.Throws<ArgumentException>(() => NumberConverter.Convert("123", NumberFormats.Dec, NumberFormats.Bin));
-            Assert.Throws<ArgumentException>(() => NumberConverter.Convert("1010", NumberFormats.Bin, NumberFormats.Dec));
-        }
+
 
         // Test cases using long binary strings - larger than max uint64
         [TestCase("1111111111111111111111111111111111111111111111111111111111111111111", NumberFormats.Bin, NumberFormats.Hex, ExpectedResult = "7FFFFFFFFFFFFFFFF")]
@@ -62,21 +56,28 @@ namespace MathToMusic.Tests.Utils
             return NumberConverter.Convert(input, from, to);
         }
 
-        // Legacy methods test - keeping these for backward compatibility
-        [TestCase("101", NumberFormats.Bin, ExpectedResult = 5)]
-        [TestCase("12", NumberFormats.Oct, ExpectedResult = 10)]
-        [TestCase("FF", NumberFormats.Hex, ExpectedResult = 255)]
-        public long ConvertToDecimal_VariousFormats_ReturnsCorrectDecimal(string input, NumberFormats format)
+        // Tests for decimal format conversions (now supported with new Convert method)
+        [TestCase("101", NumberFormats.Bin, NumberFormats.Dec, ExpectedResult = "5")]
+        [TestCase("12", NumberFormats.Oct, NumberFormats.Dec, ExpectedResult = "10")]
+        [TestCase("FF", NumberFormats.Hex, NumberFormats.Dec, ExpectedResult = "255")]
+        [TestCase("10", NumberFormats.Dec, NumberFormats.Bin, ExpectedResult = "1010")]
+        [TestCase("10", NumberFormats.Dec, NumberFormats.Oct, ExpectedResult = "12")]
+        [TestCase("10", NumberFormats.Dec, NumberFormats.Hex, ExpectedResult = "A")]
+        public string Convert_WithDecimalFormat_ReturnsCorrectResult(string input, NumberFormats from, NumberFormats to)
         {
-            return NumberConverter.ConvertToDecimal(input, format);
+            return NumberConverter.Convert(input, from, to);
         }
 
-        [TestCase(10, NumberFormats.Bin, ExpectedResult = "1010")]
-        [TestCase(10, NumberFormats.Oct, ExpectedResult = "12")]
-        [TestCase(10, NumberFormats.Hex, ExpectedResult = "A")]
-        public string ConvertFromDecimal_VariousFormats_ReturnsCorrectResult(long value, NumberFormats format)
+        [Test]
+        public void Convert_DecimalFormat_NowSupported()
         {
-            return NumberConverter.ConvertFromDecimal(value, format);
+            // Test that decimal format is now supported
+            Assert.DoesNotThrow(() => NumberConverter.Convert("123", NumberFormats.Dec, NumberFormats.Bin));
+            Assert.DoesNotThrow(() => NumberConverter.Convert("1010", NumberFormats.Bin, NumberFormats.Dec));
+            
+            // Test actual conversions
+            Assert.That(NumberConverter.Convert("123", NumberFormats.Dec, NumberFormats.Bin), Is.EqualTo("1111011"));
+            Assert.That(NumberConverter.Convert("1010", NumberFormats.Bin, NumberFormats.Dec), Is.EqualTo("10"));
         }
 
         [Test]
