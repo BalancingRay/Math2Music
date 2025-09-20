@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace MathToMusic.Tests
 {
     [TestFixture]
-    public class MultiTrackProcessorTests
+    public class MultiTrackProcessor_AI_Default_ImplementationTests
     {
         private ITonesProcessor _processor;
 
