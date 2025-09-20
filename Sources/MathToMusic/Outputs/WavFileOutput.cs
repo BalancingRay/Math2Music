@@ -106,7 +106,7 @@ namespace MathToMusic.Outputs
             }
 
             double frequency = tone.ObertonFrequencies[0];
-            double amplitude = 0.3; // Moderate volume to avoid clipping
+            double amplitude = CalculateAmplitudeForFrequency(frequency, 0.3); // Lower tones get higher amplitude
             
             for (int i = 0; i < sampleCount; i++)
             {
@@ -129,7 +129,8 @@ namespace MathToMusic.Outputs
             }
 
             double frequency = tone.ObertonFrequencies[0];
-            double amplitude = 0.3 / Math.Sqrt(2); // Reduce amplitude for mixing to avoid clipping
+            double baseAmplitude = 0.3 / Math.Sqrt(2); // Reduce amplitude for mixing to avoid clipping
+            double amplitude = CalculateAmplitudeForFrequency(frequency, baseAmplitude); // Lower tones get higher amplitude
             
             for (int i = 0; i < sampleCount; i++)
             {
@@ -182,6 +183,30 @@ namespace MathToMusic.Outputs
                 writer.Write(leftSample);
                 writer.Write(rightSample);
             }
+        }
+
+        private double CalculateAmplitudeForFrequency(double frequency, double baseAmplitude)
+        {
+            // Lower frequencies get higher amplitude to make them more intensive
+            // Using logarithmic scaling where lower frequencies get more boost
+            const double referenceFrequency = 880.0; // A5 as reference (high frequency)
+            const double amplificationFactor = 2.0;
+            
+            if (frequency <= 0)
+                return baseAmplitude;
+                
+            // Calculate amplification: lower frequencies get higher multiplier
+            // The formula gives higher values for lower frequencies
+            double frequencyRatio = referenceFrequency / frequency;
+            double amplificationMultiplier = 1.0 + Math.Log(frequencyRatio) / Math.Log(amplificationFactor);
+            
+            // Ensure minimum of 1.0 (no reduction for high frequencies)
+            amplificationMultiplier = Math.Max(1.0, amplificationMultiplier);
+            
+            // Cap the maximum amplification to avoid clipping
+            amplificationMultiplier = Math.Min(amplificationMultiplier, 3.0);
+            
+            return baseAmplitude * amplificationMultiplier;
         }
     }
 }
