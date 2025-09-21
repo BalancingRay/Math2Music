@@ -9,6 +9,7 @@ namespace MathToMusic.Tests
     [TestFixture]
     public class PolyphonicIntegrationTests
     {
+        private const int DefaultBaseDurationMs = 300; // Default base duration for processors
         [Test]
         public void ReachSingleTrackProcessor_Integration_CreatesPolyphonicWav()
         {
@@ -32,7 +33,7 @@ namespace MathToMusic.Tests
             Assert.That(result[3].Title, Is.EqualTo("Octave_High"));
 
             // After fix: All groups now have synchronized timeline duration
-            var expectedDuration = input.Length * 300; // sequence length * base duration
+            var expectedDuration = input.Length * DefaultBaseDurationMs; // sequence length * base duration
             foreach (var seq in result)
             {
                 Assert.That(seq.TotalDuration.TotalMilliseconds, Is.EqualTo(expectedDuration),
@@ -55,7 +56,7 @@ namespace MathToMusic.Tests
             Assert.That(result, Has.Count.EqualTo(3)); // 3 octave groups for OCT
 
             // After fix: All groups now have synchronized timeline duration
-            var expectedDuration = input.Length * 300; // sequence length * base duration
+            var expectedDuration = input.Length * DefaultBaseDurationMs; // sequence length * base duration
             foreach (var seq in result)
             {
                 Assert.That(seq.TotalDuration.TotalMilliseconds, Is.EqualTo(expectedDuration),
@@ -78,7 +79,7 @@ namespace MathToMusic.Tests
             Assert.That(result, Has.Count.EqualTo(2)); // 2 octave groups for QUAD
 
             // After fix: All groups now have synchronized timeline duration
-            var expectedDuration = input.Length * 300; // sequence length * base duration
+            var expectedDuration = input.Length * DefaultBaseDurationMs; // sequence length * base duration
             foreach (var seq in result)
             {
                 Assert.That(seq.TotalDuration.TotalMilliseconds, Is.EqualTo(expectedDuration),
@@ -113,18 +114,18 @@ namespace MathToMusic.Tests
             Assert.That(reachTitles, Contains.Item("Octave_High"));
         }
 
-        [TestCase("1", ExpectedResult = 1)]  // HEX: single tone gets remaining sequence duration (1*300ms)
-        [TestCase("2", ExpectedResult = 1)]  // HEX: single tone gets remaining sequence duration (1*300ms)  
-        [TestCase("4", ExpectedResult = 1)]  // HEX: single tone gets remaining sequence duration (1*300ms)
-        [TestCase("8", ExpectedResult = 1)]  // HEX: single tone gets remaining sequence duration (1*300ms)
+        [TestCase("1", ExpectedResult = 1)]  // HEX: single tone gets remaining sequence duration (1*DefaultBaseDurationMs)
+        [TestCase("2", ExpectedResult = 1)]  // HEX: single tone gets remaining sequence duration (1*DefaultBaseDurationMs)  
+        [TestCase("4", ExpectedResult = 1)]  // HEX: single tone gets remaining sequence duration (1*DefaultBaseDurationMs)
+        [TestCase("8", ExpectedResult = 1)]  // HEX: single tone gets remaining sequence duration (1*DefaultBaseDurationMs)
         public int HexFormat_IndividualTones_GetCorrectDurationMultipliers(string input)
         {
             // After fix: Individual tones get the remaining sequence duration from their position
-            // For single character input, this is always 1*baseDuration = 300ms
+            // For single character input, this is always 1*baseDuration = DefaultBaseDurationMs
             
             // Arrange
             var processor = new ReachSingleTrackProcessor();
-            int baseDuration = 300;
+            int baseDuration = DefaultBaseDurationMs;
 
             // Act
             var result = processor.Process(input, NumberFormats.Hex, NumberFormats.Hex);

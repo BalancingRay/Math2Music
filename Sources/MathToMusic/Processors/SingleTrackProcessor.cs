@@ -6,8 +6,17 @@ namespace MathToMusic.Processors
 {
     public class SingleTrackProcessor : ITonesProcessor
     {
-        double baseToneHz = 180;
-        int baseDurationMilliseconds = 300;
+        private const double DefaultBaseToneHz = 180;
+        private const int DefaultBaseDurationMilliseconds = 300;
+        
+        private readonly double baseToneHz;
+        private readonly int baseDurationMilliseconds;
+        
+        public SingleTrackProcessor(int baseDurationMilliseconds = DefaultBaseDurationMilliseconds, double baseToneHz = DefaultBaseToneHz)
+        {
+            this.baseDurationMilliseconds = baseDurationMilliseconds;
+            this.baseToneHz = baseToneHz;
+        }
 
         Dictionary<char, int> toneMap = new Dictionary<char, int>()
         {

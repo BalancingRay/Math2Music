@@ -8,6 +8,7 @@ namespace MathToMusic.Tests
     [TestFixture]
     public class ReachSingleTrackProcessorTests
     {
+        private const int DefaultBaseDurationMs = 300; // Default base duration for processors
         private ITonesProcessor _processor;
 
         [SetUp]
@@ -41,7 +42,7 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "1234"; // One tone from each major group
-            int baseDuration = 300;
+            int baseDuration = DefaultBaseDurationMs;
 
             // Act
             var result = _processor.Process(input, NumberFormats.Hex, NumberFormats.Hex);
@@ -52,12 +53,12 @@ namespace MathToMusic.Tests
             // After fix: Duration multipliers control "reach" duration within the sequence timeline
             // Based on actual behavior from debug test:
             
-            // Group 1 (tone 1 at position 0): gets full sequence remaining duration = 4*300 = 1200ms
+            // Group 1 (tone 1 at position 0): gets full sequence remaining duration = 4*DefaultBaseDurationMs = 1200ms
             var group1ActiveTone = result[0].Tones.First(t => t.ObertonFrequencies[0] != 0);
             Assert.That(group1ActiveTone.Duration.TotalMilliseconds, Is.EqualTo(1200), 
                 "Group 1 tone should get full remaining sequence duration");
 
-            // Group 2 (tone 2 at position 1): gets remaining from position 1 = 3*300 = 900ms  
+            // Group 2 (tone 2 at position 1): gets remaining from position 1 = 3*DefaultBaseDurationMs = 900ms  
             var group2ActiveTone = result[1].Tones.First(t => t.ObertonFrequencies[0] != 0);
             Assert.That(group2ActiveTone.Duration.TotalMilliseconds, Is.EqualTo(900), 
                 "Group 2 tone should get remaining duration from its position");
@@ -127,7 +128,7 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "124"; // One tone from each group
-            int baseDuration = 300;
+            int baseDuration = DefaultBaseDurationMs;
 
             // Act
             var result = _processor.Process(input, NumberFormats.Oct, NumberFormats.Oct);
@@ -174,7 +175,7 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "12"; // One tone from each group
-            int baseDuration = 300;
+            int baseDuration = DefaultBaseDurationMs;
 
             // Act
             var result = _processor.Process(input, NumberFormats.Qad, NumberFormats.Qad);
@@ -255,7 +256,7 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "12";
-            int baseDuration = 300;
+            int baseDuration = DefaultBaseDurationMs;
 
             // Act
             var result = _processor.Process(input, NumberFormats.Hex, NumberFormats.Hex);
@@ -494,6 +495,104 @@ namespace MathToMusic.Tests
         }
 
         [Test]
+        public void Test_Custom_Duration_150ms()
+        {
+            // Test processors with custom 150ms base duration
+            var customDuration = 150;
+            var singleProcessor = new SingleTrackProcessor(customDuration);
+            var reachProcessor = new ReachSingleTrackProcessor(customDuration);
+            
+            string input = "123456"; // 6 tones
+            var expectedDuration = input.Length * customDuration; // 6 * 150ms = 900ms
+            
+            TestContext.WriteLine($"=== CUSTOM DURATION TEST: {customDuration}ms ===");
+            
+            // Test SingleTrackProcessor with custom duration
+            var singleResult = ((ITonesProcessor)singleProcessor).Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            TestContext.WriteLine($"SingleTrackProcessor: {singleResult[0].TotalDuration.TotalMilliseconds}ms");
+            Assert.That(singleResult[0].TotalDuration.TotalMilliseconds, Is.EqualTo(expectedDuration),
+                $"SingleTrackProcessor should use custom duration of {customDuration}ms per tone");
+            
+            // Verify individual tone durations
+            foreach (var tone in singleResult[0].Tones)
+            {
+                Assert.That(tone.Duration.TotalMilliseconds, Is.EqualTo(customDuration),
+                    $"Each tone should have duration of {customDuration}ms");
+            }
+            
+            // Test ReachSingleTrackProcessor with custom duration
+            var reachResult = reachProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            foreach (var seq in reachResult)
+            {
+                TestContext.WriteLine($"  {seq.Title}: {seq.TotalDuration.TotalMilliseconds}ms");
+                Assert.That(seq.TotalDuration.TotalMilliseconds, Is.EqualTo(expectedDuration),
+                    $"{seq.Title} should use custom duration timeline of {expectedDuration}ms total");
+            }
+        }
+
+        [Test]
+        public void Test_Custom_Duration_500ms()
+        {
+            // Test processors with custom 500ms base duration
+            var customDuration = 500;
+            var singleProcessor = new SingleTrackProcessor(customDuration);
+            var reachProcessor = new ReachSingleTrackProcessor(customDuration);
+            
+            string input = "ABC"; // 3 tones
+            var expectedDuration = input.Length * customDuration; // 3 * 500ms = 1500ms
+            
+            TestContext.WriteLine($"=== CUSTOM DURATION TEST: {customDuration}ms ===");
+            
+            // Test SingleTrackProcessor with custom duration
+            var singleResult = ((ITonesProcessor)singleProcessor).Process(input, NumberFormats.Hex, NumberFormats.Hex);
+            TestContext.WriteLine($"SingleTrackProcessor: {singleResult[0].TotalDuration.TotalMilliseconds}ms");
+            Assert.That(singleResult[0].TotalDuration.TotalMilliseconds, Is.EqualTo(expectedDuration),
+                $"SingleTrackProcessor should use custom duration of {customDuration}ms per tone");
+            
+            // Test ReachSingleTrackProcessor with custom duration
+            var reachResult = reachProcessor.Process(input, NumberFormats.Hex, NumberFormats.Hex);
+            foreach (var seq in reachResult)
+            {
+                TestContext.WriteLine($"  {seq.Title}: {seq.TotalDuration.TotalMilliseconds}ms");
+                Assert.That(seq.TotalDuration.TotalMilliseconds, Is.EqualTo(expectedDuration),
+                    $"{seq.Title} should use custom duration timeline of {expectedDuration}ms total");
+            }
+        }
+
+        [Test]
+        public void Test_MultiTrack_Custom_Duration_200ms()
+        {
+            // Test MultiTrackProcessor with custom duration
+            var customDuration = 200;
+            var multiProcessor = new MultiTrackProcessor(customDuration);
+            
+            string input = "12+34"; // Two sequences with 2 tones each
+            var expectedDuration = 2 * customDuration; // 2 * 200ms = 400ms per sequence
+            
+            TestContext.WriteLine($"=== MULTITRACK CUSTOM DURATION TEST: {customDuration}ms ===");
+            
+            var result = multiProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            TestContext.WriteLine($"MultiTrackProcessor sequences: {result.Count}");
+            
+            // Should have 2 sequences (one for "12", one for "34")
+            Assert.That(result, Has.Count.EqualTo(2));
+            
+            foreach (var seq in result)
+            {
+                TestContext.WriteLine($"  {seq.Title}: {seq.TotalDuration.TotalMilliseconds}ms, {seq.Tones.Count} tones");
+                Assert.That(seq.TotalDuration.TotalMilliseconds, Is.EqualTo(expectedDuration),
+                    $"Each sequence should have duration of {expectedDuration}ms");
+                
+                // Verify individual tone durations within each sequence
+                foreach (var tone in seq.Tones)
+                {
+                    Assert.That(tone.Duration.TotalMilliseconds, Is.EqualTo(customDuration),
+                        $"Each tone should have duration of {customDuration}ms");
+                }
+            }
+        }
+
+        [Test]
         public void Test_Simultaneous_Start_Times_Issue()
         {
             // This test demonstrates that tones should start at the same time positions
@@ -533,7 +632,7 @@ namespace MathToMusic.Tests
         {
             // Debug test to understand the actual behavior after the fix
             string input = "1234"; // One tone from each major group
-            int baseDuration = 300;
+            int baseDuration = DefaultBaseDurationMs;
 
             var result = _processor.Process(input, NumberFormats.Hex, NumberFormats.Hex);
 

@@ -8,6 +8,7 @@ namespace MathToMusic.Tests
     [TestFixture]
     public class SingleTrackProcessorTests
     {
+        private const int DefaultBaseDurationMs = 300; // Default base duration for processors
         private ITonesProcessor _processor;
 
         [SetUp]
@@ -125,7 +126,7 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "12";
-            int baseDuration = 300; // milliseconds per tone
+            int baseDuration = DefaultBaseDurationMs; // milliseconds per tone
 
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
@@ -139,7 +140,7 @@ namespace MathToMusic.Tests
         {
             // Arrange
             string input = "123";
-            int expectedDuration = 300;
+            int expectedDuration = DefaultBaseDurationMs;
 
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
@@ -187,6 +188,75 @@ namespace MathToMusic.Tests
             // Check tone values: '1'=1, '0'=0
             Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // '1'
             Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 0)); // '0'
+        }
+
+        [Test]
+        public void SingleTrackProcessor_CustomDuration_250ms()
+        {
+            // Test SingleTrackProcessor with custom 250ms base duration
+            var customDuration = 250;
+            var customProcessor = new SingleTrackProcessor(customDuration);
+            
+            string input = "12345"; // 5 tones
+            var expectedTotalDuration = input.Length * customDuration; // 5 * 250ms = 1250ms
+            
+            // Act
+            var result = ((ITonesProcessor)customProcessor).Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].Tones, Has.Count.EqualTo(5));
+            
+            // Check total duration
+            Assert.That(result[0].TotalDuration.TotalMilliseconds, Is.EqualTo(expectedTotalDuration));
+            
+            // Check individual tone durations
+            foreach (var tone in result[0].Tones)
+            {
+                Assert.That(tone.Duration.TotalMilliseconds, Is.EqualTo(customDuration),
+                    $"Each tone should have custom duration of {customDuration}ms");
+            }
+            
+            // Verify frequencies are still correct (180Hz * tone value)
+            Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // '1'
+            Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 2)); // '2'
+            Assert.That(result[0].Tones[2].ObertonFrequencies[0], Is.EqualTo(180 * 3)); // '3'
+            Assert.That(result[0].Tones[3].ObertonFrequencies[0], Is.EqualTo(180 * 4)); // '4'
+            Assert.That(result[0].Tones[4].ObertonFrequencies[0], Is.EqualTo(180 * 5)); // '5'
+        }
+
+        [Test]
+        public void SingleTrackProcessor_CustomDurationAndFrequency()
+        {
+            // Test SingleTrackProcessor with both custom duration and frequency
+            var customDuration = 400;
+            var customBaseFreq = 220.0; // A3 note
+            var customProcessor = new SingleTrackProcessor(customDuration, customBaseFreq);
+            
+            string input = "123";
+            
+            // Act
+            var result = ((ITonesProcessor)customProcessor).Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result[0].Tones, Has.Count.EqualTo(3));
+            
+            // Check durations
+            foreach (var tone in result[0].Tones)
+            {
+                Assert.That(tone.Duration.TotalMilliseconds, Is.EqualTo(customDuration));
+            }
+            
+            // Check frequencies use custom base frequency
+            Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(customBaseFreq * 1)); // '1'
+            Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(customBaseFreq * 2)); // '2'
+            Assert.That(result[0].Tones[2].ObertonFrequencies[0], Is.EqualTo(customBaseFreq * 3)); // '3'
+            
+            // Check total duration
+            var expectedTotalDuration = 3 * customDuration;
+            Assert.That(result[0].TotalDuration.TotalMilliseconds, Is.EqualTo(expectedTotalDuration));
         }
     }
 }
