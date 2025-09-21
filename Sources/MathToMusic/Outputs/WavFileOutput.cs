@@ -2,7 +2,7 @@ using MathToMusic.Contracts;
 
 namespace MathToMusic.Outputs
 {
-    internal class WavFileOutput : ITonesOutput
+    internal class WavFileOutput : ITonesFileOutput
     {
         private const int SampleRate = 44100; // Standard CD quality
         private const short BitsPerSample = 16;
@@ -10,8 +10,13 @@ namespace MathToMusic.Outputs
         
         public void Send(IList<Sequiention> input)
         {
+            SendAndGetFilePath(input);
+        }
+
+        public string? SendAndGetFilePath(IList<Sequiention> input)
+        {
             if (input == null || input.Count == 0)
-                return;
+                return null;
 
             // Create Results directory if it doesn't exist
             string resultsPath = GetResultsPath();
@@ -35,6 +40,7 @@ namespace MathToMusic.Outputs
             }
 
             Console.WriteLine($"WAV file saved: {filePath}");
+            return filePath;
         }
 
         private string GetResultsPath()
