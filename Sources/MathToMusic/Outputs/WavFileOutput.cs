@@ -8,6 +8,25 @@ namespace MathToMusic.Outputs
         private const short BitsPerSample = 16;
         private const short NumChannels = 2; // Stereo for polyphonic support
         
+        // Stereo positioning constants
+        /// <summary>
+        /// Minimal shift parameter for stereo positioning. Range: [0.05, 0.2]
+        /// Low values (0.05): Subtle stereo separation, centered sound
+        /// High values (0.2): Wide stereo separation, more pronounced positioning effect
+        /// Current: 0.1 provides good stereo separation without being too extreme
+        /// For 2 sequences: coefficients will be 1.0/0.9 and 0.9/1.0
+        /// </summary>
+        private const double MinimalShift = 0.1;
+        
+        /// <summary>
+        /// Maximum shift parameter to prevent excessive stereo effects. Range: [0.6, 1.0]
+        /// Low values (0.6): Conservative stereo spread, prevents extreme panning
+        /// High values (1.0): Allows full stereo separation (complete left/right isolation)
+        /// Current: 0.8 provides wide stereo spread while maintaining some center presence
+        /// Prevents coefficients like 1.0/0.0 which would completely isolate to one channel
+        /// </summary>
+        private const double MaximalShift = 0.8;
+        
         // Audio amplitude and scaling constants
         /// <summary>
         /// Base amplitude for tone generation. Range: [0.1, 0.8]
@@ -149,16 +168,22 @@ namespace MathToMusic.Outputs
             // Calculate dynamic amplitude scaling based on number of sequences
             double sequenceAmplitudeScaling = CalculateSequenceAmplitudeScaling(sequences.Count);
             
-            // Mix all sequences simultaneously
-            foreach (var sequence in sequences)
+            // Calculate stereo positioning coefficients for all sequences
+            var stereoCoefficients = CalculateStereoCoefficients(sequences.Count);
+            
+            // Mix all sequences simultaneously with stereo positioning
+            for (int seqIndex = 0; seqIndex < sequences.Count; seqIndex++)
             {
+                var sequence = sequences[seqIndex];
+                var (leftCoeff, rightCoeff) = stereoCoefficients[seqIndex];
+                
                 int sampleIndex = 0;
                 foreach (var tone in sequence.Tones)
                 {
                     int toneSamples = (int)(tone.Duration.TotalSeconds * SampleRate);
                     if (sampleIndex + toneSamples <= totalSamples)
                     {
-                        AddToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequenceAmplitudeScaling);
+                        AddToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequenceAmplitudeScaling, leftCoeff, rightCoeff);
                     }
                     sampleIndex += toneSamples;
                 }
@@ -202,10 +227,15 @@ namespace MathToMusic.Outputs
 
         private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount)
         {
-            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, 1.0);
+            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, 1.0, 1.0, 1.0);
         }
 
         private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling)
+        {
+            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, additionalScaling, 1.0, 1.0);
+        }
+
+        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling, double leftCoeff, double rightCoeff)
         {
             if (tone.ObertonFrequencies[0] == 0) // Rest/silence
             {
@@ -222,8 +252,9 @@ namespace MathToMusic.Outputs
                     double time = (double)i / SampleRate;
                     float sample = (float)(amplitude * Math.Sin(2 * Math.PI * frequency * time));
                     
-                    leftChannel[startIndex + i] += sample;
-                    rightChannel[startIndex + i] += sample;
+                    // Apply stereo coefficients
+                    leftChannel[startIndex + i] += sample * (float)leftCoeff;
+                    rightChannel[startIndex + i] += sample * (float)rightCoeff;
                 }
             }
         }
@@ -328,6 +359,70 @@ namespace MathToMusic.Outputs
                 leftChannel[i] *= normalizationFactor;
                 rightChannel[i] *= normalizationFactor;
             }
+        }
+
+        /// <summary>
+        /// Calculates stereo positioning coefficients for multiple sequences.
+        /// Distributes sequences across the stereo field from left to right.
+        /// </summary>
+        /// <param name="sequenceCount">Number of sequences to position</param>
+        /// <returns>Array of (leftCoeff, rightCoeff) pairs for each sequence</returns>
+        private (double leftCoeff, double rightCoeff)[] CalculateStereoCoefficients(int sequenceCount)
+        {
+            if (sequenceCount <= 1)
+            {
+                // Single sequence stays centered
+                return new[] { (1.0, 1.0) };
+            }
+
+            var coefficients = new (double leftCoeff, double rightCoeff)[sequenceCount];
+            
+            // Calculate individual shift between adjacent sequences
+            double individualShift = MinimalShift;
+            
+            // Check if total shift would exceed maximum and scale down if needed
+            double totalRequiredShift = individualShift * (sequenceCount - 1);
+            if (totalRequiredShift > MaximalShift)
+            {
+                individualShift = MaximalShift / (sequenceCount - 1);
+            }
+            
+            for (int i = 0; i < sequenceCount; i++)
+            {
+                double leftCoeff, rightCoeff;
+                
+                if (sequenceCount == 2)
+                {
+                    // For 2 sequences: 1.0/0.9 and 0.9/1.0 (per requirements)
+                    if (i == 0)
+                    {
+                        leftCoeff = 1.0;
+                        rightCoeff = 1.0 - individualShift;
+                    }
+                    else
+                    {
+                        leftCoeff = 1.0 - individualShift;
+                        rightCoeff = 1.0;
+                    }
+                }
+                else
+                {
+                    // For 3+ sequences: distribute evenly from left to right
+                    // Calculate position relative to center
+                    double centerIndex = (sequenceCount - 1) / 2.0;
+                    double positionFromCenter = i - centerIndex;
+                    double shift = positionFromCenter * individualShift;
+                    
+                    // Apply shift to create stereo coefficients
+                    // Positive shift = more right, negative shift = more left
+                    leftCoeff = 1.0 - Math.Max(0, shift);
+                    rightCoeff = 1.0 + Math.Min(0, shift);
+                }
+                
+                coefficients[i] = (leftCoeff, rightCoeff);
+            }
+            
+            return coefficients;
         }
     }
 }
