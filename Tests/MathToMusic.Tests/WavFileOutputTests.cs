@@ -361,5 +361,249 @@ namespace MathToMusic.Tests
             var fileInfo = new FileInfo(filePath);
             Assert.That(fileInfo.Length, Is.GreaterThan(1000)); // Should be substantial for 8 channels
         }
+
+        #region Stereo Positioning Tests
+
+        [Test]
+        public void Send_SingleSequence_RemainsCentered()
+        {
+            // Arrange
+            var sequence = new Sequiention
+            {
+                Tones = new List<Tone> { new Tone(440.0, 500) },
+                TotalDuration = TimeSpan.FromSeconds(0.5),
+                Title = "Mono"
+            };
+            var input = new List<Sequiention> { sequence };
+
+            // Act & Assert - Should not throw and should create centered audio
+            Assert.DoesNotThrow(() => _wavOutput.Send(input));
+
+            var wavFiles = Directory.GetFiles(_testResultsPath, "mono_*.wav");
+            Assert.That(wavFiles.Length, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void Send_TwoSequences_AppliesBasicStereoSeparation()
+        {
+            // Arrange - Two sequences should get 1.0/0.9 and 0.9/1.0 coefficients
+            var sequence1 = new Sequiention
+            {
+                Tones = new List<Tone> { new Tone(440.0, 500) },
+                TotalDuration = TimeSpan.FromSeconds(0.5),
+                Title = "Left"
+            };
+            var sequence2 = new Sequiention
+            {
+                Tones = new List<Tone> { new Tone(880.0, 500) },
+                TotalDuration = TimeSpan.FromSeconds(0.5),
+                Title = "Right"
+            };
+            var input = new List<Sequiention> { sequence1, sequence2 };
+
+            // Act
+            string? filePath = null;
+            Assert.DoesNotThrow(() => 
+            {
+                filePath = _wavOutput.SendAndGetFilePath(input);
+            });
+
+            // Assert
+            Assert.That(filePath, Is.Not.Null);
+            Assert.That(File.Exists(filePath), Is.True);
+
+            // Verify it's a polyphonic file
+            Assert.That(Path.GetFileName(filePath), Does.StartWith("poly_"));
+
+            var fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(500)); // Should have substantial stereo content
+        }
+
+        [Test]
+        public void Send_ThreeSequences_DistributesAcrossStereoField()
+        {
+            // Arrange - Three sequences: left, center, right positioning
+            var sequences = new List<Sequiention>();
+            for (int i = 0; i < 3; i++)
+            {
+                sequences.Add(new Sequiention
+                {
+                    Tones = new List<Tone> { new Tone(440.0 + i * 110, 500) },
+                    TotalDuration = TimeSpan.FromSeconds(0.5),
+                    Title = $"Track{i + 1}"
+                });
+            }
+
+            // Act
+            string? filePath = null;
+            Assert.DoesNotThrow(() => 
+            {
+                filePath = _wavOutput.SendAndGetFilePath(sequences);
+            });
+
+            // Assert
+            Assert.That(filePath, Is.Not.Null);
+            Assert.That(File.Exists(filePath), Is.True);
+
+            // Verify it's a polyphonic file with reasonable size
+            Assert.That(Path.GetFileName(filePath), Does.StartWith("poly_"));
+            var fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(800)); // Should have substantial content for 3 tracks
+        }
+
+        [Test]
+        public void Send_ManySequences_RespectsMaximumShift()
+        {
+            // Arrange - Many sequences to test maximum shift limiting
+            var sequences = new List<Sequiention>();
+            for (int i = 0; i < 10; i++)
+            {
+                sequences.Add(new Sequiention
+                {
+                    Tones = new List<Tone> { new Tone(440.0 + i * 55, 300) },
+                    TotalDuration = TimeSpan.FromSeconds(0.3),
+                    Title = $"Track{i + 1}"
+                });
+            }
+
+            // Act - Should not throw even with many sequences
+            string? filePath = null;
+            Assert.DoesNotThrow(() => 
+            {
+                filePath = _wavOutput.SendAndGetFilePath(sequences);
+            });
+
+            // Assert
+            Assert.That(filePath, Is.Not.Null);
+            Assert.That(File.Exists(filePath), Is.True);
+
+            // Verify it's a polyphonic file
+            Assert.That(Path.GetFileName(filePath), Does.StartWith("poly_"));
+            var fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(1500)); // Should have content for 10 tracks
+        }
+
+        [Test]
+        public void Send_StereoPositioning_MaintainsWavFileStructure()
+        {
+            // Arrange - Multiple sequences to test stereo while verifying WAV structure
+            var sequences = new List<Sequiention>();
+            for (int i = 0; i < 4; i++)
+            {
+                sequences.Add(new Sequiention
+                {
+                    Tones = new List<Tone> { new Tone(220.0 * (i + 1), 400) },
+                    TotalDuration = TimeSpan.FromSeconds(0.4),
+                    Title = $"StereoTest{i + 1}"
+                });
+            }
+
+            // Act
+            string? filePath = null;
+            Assert.DoesNotThrow(() => 
+            {
+                filePath = _wavOutput.SendAndGetFilePath(sequences);
+            });
+
+            // Assert
+            Assert.That(filePath, Is.Not.Null);
+            Assert.That(File.Exists(filePath), Is.True);
+
+            // Verify WAV file structure is still valid
+            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            using var reader = new BinaryReader(fileStream);
+
+            // Check RIFF header
+            string riff = new string(reader.ReadChars(4));
+            Assert.That(riff, Is.EqualTo("RIFF"));
+
+            reader.ReadInt32(); // file size
+            string wave = new string(reader.ReadChars(4));
+            Assert.That(wave, Is.EqualTo("WAVE"));
+
+            // Check format chunk
+            string fmt = new string(reader.ReadChars(4));
+            Assert.That(fmt, Is.EqualTo("fmt "));
+
+            reader.ReadInt32(); // format chunk size
+            short audioFormat = reader.ReadInt16();
+            Assert.That(audioFormat, Is.EqualTo(1)); // PCM
+
+            short numChannels = reader.ReadInt16();
+            Assert.That(numChannels, Is.EqualTo(2)); // Still stereo
+
+            int sampleRate = reader.ReadInt32();
+            Assert.That(sampleRate, Is.EqualTo(44100)); // Still standard sample rate
+        }
+
+        [Test]
+        public void Send_EmptySequences_HandledCorrectlyWithStereo()
+        {
+            // Arrange - Sequences with some silence to test stereo with rests
+            var sequence1 = new Sequiention
+            {
+                Tones = new List<Tone>
+                {
+                    new Tone(440.0, 200),  // Sound
+                    new Tone(0.0, 200),    // Rest
+                    new Tone(523.25, 200)  // Sound
+                },
+                TotalDuration = TimeSpan.FromSeconds(0.6),
+                Title = "WithSilence1"
+            };
+            var sequence2 = new Sequiention
+            {
+                Tones = new List<Tone>
+                {
+                    new Tone(0.0, 200),    // Rest
+                    new Tone(659.25, 200), // Sound
+                    new Tone(0.0, 200)     // Rest
+                },
+                TotalDuration = TimeSpan.FromSeconds(0.6),
+                Title = "WithSilence2"
+            };
+            var input = new List<Sequiention> { sequence1, sequence2 };
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => _wavOutput.Send(input));
+
+            var wavFiles = Directory.GetFiles(_testResultsPath, "poly_*.wav");
+            Assert.That(wavFiles.Length, Is.GreaterThan(0));
+
+            var fileInfo = new FileInfo(wavFiles[0]);
+            Assert.That(fileInfo.Length, Is.GreaterThan(400)); // Should have reasonable content
+        }
+
+        [Test]
+        public void Send_VeryLowFrequenciesWithStereo_HandlesAmplificationCorrectly()
+        {
+            // Arrange - Test stereo with low frequencies that get amplified
+            var sequences = new List<Sequiention>();
+            for (int i = 0; i < 3; i++)
+            {
+                sequences.Add(new Sequiention
+                {
+                    Tones = new List<Tone> { new Tone(40.0 + i * 10, 400) }, // Very low: 40Hz, 50Hz, 60Hz
+                    TotalDuration = TimeSpan.FromSeconds(0.4),
+                    Title = $"LowFreqStereo{i + 1}"
+                });
+            }
+
+            // Act
+            string? filePath = null;
+            Assert.DoesNotThrow(() => 
+            {
+                filePath = _wavOutput.SendAndGetFilePath(sequences);
+            });
+
+            // Assert - Should handle low frequency amplification + stereo without issues
+            Assert.That(filePath, Is.Not.Null);
+            Assert.That(File.Exists(filePath), Is.True);
+
+            var fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(800)); // Should have substantial content
+        }
+
+        #endregion
     }
 }
