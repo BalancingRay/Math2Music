@@ -16,6 +16,11 @@ namespace MathToMusic.Processors
             _singleTrackProcessor = singleTrackProcessor;
         }
 
+        public MultiTrackProcessor(int baseDurationMilliseconds = 300, double baseToneHz = 180)
+        {
+            _singleTrackProcessor = new SingleTrackProcessor(baseDurationMilliseconds, baseToneHz);
+        }
+
         public MultiTrackProcessor()
         {
             _singleTrackProcessor = new SingleTrackProcessor();
