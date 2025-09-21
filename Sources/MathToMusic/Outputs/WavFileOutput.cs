@@ -79,6 +79,9 @@ namespace MathToMusic.Outputs
             float[] leftChannel = new float[totalSamples];
             float[] rightChannel = new float[totalSamples];
             
+            // Calculate dynamic amplitude scaling based on number of sequences
+            double sequenceAmplitudeScaling = CalculateSequenceAmplitudeScaling(sequences.Count);
+            
             // Mix all sequences simultaneously
             foreach (var sequence in sequences)
             {
@@ -88,11 +91,14 @@ namespace MathToMusic.Outputs
                     int toneSamples = (int)(tone.Duration.TotalSeconds * SampleRate);
                     if (sampleIndex + toneSamples <= totalSamples)
                     {
-                        AddToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples);
+                        AddToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequenceAmplitudeScaling);
                     }
                     sampleIndex += toneSamples;
                 }
             }
+
+            // Apply normalization to prevent clipping
+            NormalizeAudioData(leftChannel, rightChannel);
 
             WriteWavFile(filePath, leftChannel, rightChannel, totalSamples);
         }
@@ -112,7 +118,7 @@ namespace MathToMusic.Outputs
             }
 
             double frequency = tone.ObertonFrequencies[0];
-            double amplitude = CalculateAmplitudeForFrequency(frequency, 0.3); // Lower tones get higher amplitude
+            double amplitude = CalculateAmplitudeForFrequency(frequency, 0.3); // Same base amplitude as polyphonic
             
             for (int i = 0; i < sampleCount; i++)
             {
@@ -129,14 +135,19 @@ namespace MathToMusic.Outputs
 
         private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount)
         {
+            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, 1.0);
+        }
+
+        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling)
+        {
             if (tone.ObertonFrequencies[0] == 0) // Rest/silence
             {
                 return;
             }
 
             double frequency = tone.ObertonFrequencies[0];
-            double baseAmplitude = 0.3 / Math.Sqrt(2); // Reduce amplitude for mixing to avoid clipping
-            double amplitude = CalculateAmplitudeForFrequency(frequency, baseAmplitude); // Lower tones get higher amplitude
+            double baseAmplitude = 0.3; // Base amplitude without mixing reduction
+            double amplitude = CalculateAmplitudeForFrequency(frequency, baseAmplitude) * additionalScaling;
             
             for (int i = 0; i < sampleCount; i++)
             {
@@ -213,6 +224,47 @@ namespace MathToMusic.Outputs
             amplificationMultiplier = Math.Min(amplificationMultiplier, 3.0);
             
             return baseAmplitude * amplificationMultiplier;
+        }
+
+        private double CalculateSequenceAmplitudeScaling(int sequenceCount)
+        {
+            // Scale down amplitude based on number of sequences to prevent clipping
+            // Use a more sophisticated scaling that preserves dynamic range
+            if (sequenceCount <= 1)
+                return 1.0;
+            
+            // Conservative scaling: reduces amplitude but not as aggressively as simple division
+            // This preserves some dynamic range while preventing clipping
+            double scaling = 1.0 / Math.Pow(sequenceCount, 0.7); // Power law scaling (less aggressive than linear)
+            
+            // Ensure minimum scaling to prevent sounds from becoming too quiet
+            return Math.Max(scaling, 0.1);
+        }
+
+        private void NormalizeAudioData(float[] leftChannel, float[] rightChannel)
+        {
+            // Find the maximum absolute value in both channels
+            float maxSample = 0.0f;
+            
+            for (int i = 0; i < leftChannel.Length; i++)
+            {
+                maxSample = Math.Max(maxSample, Math.Abs(leftChannel[i]));
+                maxSample = Math.Max(maxSample, Math.Abs(rightChannel[i]));
+            }
+
+            // If audio is already within bounds, no normalization needed
+            if (maxSample <= 0.95f) // Leave some headroom
+                return;
+
+            // Calculate normalization factor to bring peak to 0.9 (leaving headroom)
+            float normalizationFactor = 0.9f / maxSample;
+
+            // Apply normalization
+            for (int i = 0; i < leftChannel.Length; i++)
+            {
+                leftChannel[i] *= normalizationFactor;
+                rightChannel[i] *= normalizationFactor;
+            }
         }
     }
 }
