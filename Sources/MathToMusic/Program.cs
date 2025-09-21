@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using MathToMusic;
 using MathToMusic.Contracts;
+using MathToMusic.Extensions;
 using MathToMusic.Models;
 using MathToMusic.Outputs;
 using MathToMusic.Processors;
@@ -54,7 +55,7 @@ while (true)
     ITonesProcessor processor = ExpressionParser.IsPolyphonic(input)
         ? new MultiTrackProcessor(singleProcessor)
         : singleProcessor;
-    ITonesOutput output = new WavFileOutput();
+    ITonesFileOutput output = new WavFileOutput().OpenFile();
     foreach (var outputFormat in outFormats)
     {
         var song = processor.Process(input, outputFormat, inputFormat);
@@ -62,15 +63,6 @@ while (true)
         {
             output.Send(song);
         }
-        //if (false)
-        //{
-        //    Console.WriteLine($"Converted number ({outputFormat} by binGroup {binGroupSize}): {convertedBuilder}");
-        //}
-        //else
-        //{
-        //    Console.WriteLine($"Number converting from {inputFormat} to {outputFormat} not supported");
-        //    continue;
-        //}
 
         Console.WriteLine($"Result: ");
         //Console.WriteLine(resultBuilder.ToString());
