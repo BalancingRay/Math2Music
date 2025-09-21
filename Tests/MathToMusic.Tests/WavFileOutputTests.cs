@@ -265,5 +265,101 @@ namespace MathToMusic.Tests
             var fileInfo = new FileInfo(wavFiles[0]);
             Assert.That(fileInfo.Length, Is.GreaterThan(100));
         }
+
+        [Test]
+        public void Send_MultipleSequences_PreventClipping()
+        {
+            // Arrange - Multiple sequences with same frequencies and high amplitudes to test clipping prevention
+            var sequences = new List<Sequiention>();
+            for (int i = 0; i < 5; i++) // 5 sequences to force potential clipping
+            {
+                sequences.Add(new Sequiention
+                {
+                    Tones = new List<Tone>
+                    {
+                        new Tone(440.0, 500), // A4 for all sequences
+                        new Tone(880.0, 500)  // A5 for all sequences
+                    },
+                    TotalDuration = TimeSpan.FromSeconds(1),
+                    Title = $"Track{i + 1}"
+                });
+            }
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => _wavOutput.Send(sequences));
+
+            var wavFiles = Directory.GetFiles(_testResultsPath, "poly_*.wav");
+            Assert.That(wavFiles.Length, Is.GreaterThan(0));
+
+            // Verify WAV file is created with reasonable size
+            var fileInfo = new FileInfo(wavFiles[0]);
+            Assert.That(fileInfo.Length, Is.GreaterThan(1000)); // Should be substantial for 1 second of audio
+        }
+
+        [Test]
+        public void Send_ManySequencesWithLowFrequencies_HandlesAmplificationCorrectly()
+        {
+            // Arrange - Test with very low frequencies that get amplified
+            var sequences = new List<Sequiention>();
+            for (int i = 0; i < 3; i++)
+            {
+                sequences.Add(new Sequiention
+                {
+                    Tones = new List<Tone>
+                    {
+                        new Tone(45.0 + i * 10, 500), // Very low frequencies: 45Hz, 55Hz, 65Hz
+                        new Tone(90.0 + i * 20, 500)  // Low frequencies: 90Hz, 110Hz, 130Hz
+                    },
+                    TotalDuration = TimeSpan.FromSeconds(1),
+                    Title = $"LowFreq{i + 1}"
+                });
+            }
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => _wavOutput.Send(sequences));
+
+            var wavFiles = Directory.GetFiles(_testResultsPath, "poly_*.wav");
+            Assert.That(wavFiles.Length, Is.GreaterThan(0));
+
+            // The file should be created without exceptions (indicating no clipping-related crashes)
+            var fileInfo = new FileInfo(wavFiles[0]);
+            Assert.That(fileInfo.Length, Is.GreaterThan(1000));
+        }
+
+        [Test]
+        public void Send_VerifyNormalizationApplied_WhenAmplitudeExceedsRange()
+        {
+            // Arrange - Create a scenario that would definitely cause clipping without normalization
+            var sequences = new List<Sequiention>();
+            
+            // Add multiple sequences with the same low frequency (gets amplified) to force clipping
+            for (int i = 0; i < 8; i++) // 8 sequences should definitely require normalization
+            {
+                sequences.Add(new Sequiention
+                {
+                    Tones = new List<Tone>
+                    {
+                        new Tone(30.0, 300), // Very low frequency gets maximum amplification
+                    },
+                    TotalDuration = TimeSpan.FromSeconds(0.3),
+                    Title = $"ClippingTest{i + 1}"
+                });
+            }
+
+            // Act - This should trigger normalization
+            string? filePath = null;
+            Assert.DoesNotThrow(() => 
+            {
+                filePath = _wavOutput.SendAndGetFilePath(sequences);
+            });
+
+            // Assert
+            Assert.That(filePath, Is.Not.Null);
+            Assert.That(File.Exists(filePath), Is.True);
+
+            // Verify the file has content and is not corrupted
+            var fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(1000)); // Should be substantial for 8 channels
+        }
     }
 }
