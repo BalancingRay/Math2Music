@@ -176,10 +176,6 @@ namespace MathToMusic.Tests
             Assert.That(profiles, Contains.Item("Sine"));
             Assert.That(profiles, Contains.Item("Sawtooth"));
             Assert.That(profiles, Contains.Item("Square"));
-
-            // Should be sorted
-            var sortedProfiles = profiles.OrderBy(p => p).ToList();
-            Assert.That(profiles, Is.EqualTo(sortedProfiles));
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace MathToMusic.Outputs
 {
-    internal class TestMelodyOutput
+    public class TestMelodyOutput : ITonesOutput
     {
         private readonly TimeSpan discretization;
         private readonly TimeSpan traseLimitation;
@@ -12,6 +12,12 @@ namespace MathToMusic.Outputs
         {
             this.discretization = TimeSpan.FromMilliseconds(discretizationMilliseconds);
             this.traseLimitation = TimeSpan.FromSeconds(traseLimitationSec);
+        }
+
+        public void Send(IList<Sequiention> input)
+        {
+            var result = GetMelodyTracing(input);
+            Console.WriteLine(result);
         }
 
         public string GetMelodyTracing(IList<Sequiention> input)
@@ -27,28 +33,36 @@ namespace MathToMusic.Outputs
 
             foreach (var sequention in input)
             {
-                int position = 0;
-                foreach (var note in sequention.Tones)
+                // For each tone sequence, calculate the position based on base duration intervals
+                // rather than accumulating actual tone durations
+                for (int i = 0; i < sequention.Tones.Count; i++)
                 {
-                    bool[]? data;
-                    string toneKey = ((int)Math.Round(note.BaseTone, 0)).ToString();
-                    if (!notesUsings.TryGetValue(toneKey, out data))
+                    var note = sequention.Tones[i];
+                    if (note.BaseTone > 0) // Skip silence (0 Hz)
                     {
-                        data = new bool[maxProcessedTact];
-                        notesUsings[toneKey] = data;
-                    }
-                    int length = (int)Math.Round(note.Duration / discretization, 0);
+                        string toneKey = ((int)note.BaseTone).ToString();
+                        if (!notesUsings.TryGetValue(toneKey, out var data))
+                        {
+                            data = new bool[maxProcessedTact];
+                            notesUsings[toneKey] = data;
+                        }
 
-                    data[position] = true;
-                    position += length;
+                        // Calculate position based on tone index, not accumulated duration
+                        int position = (int)((i * discretization.TotalMilliseconds) / discretization.TotalMilliseconds);
+                        if (position < maxProcessedTact)
+                        {
+                            data[position] = true;
+                        }
+                    }
                 }
             }
+
             var builder = new StringBuilder();
             foreach (var item in notesUsings.ToList().OrderBy(i => i.Key))
             {
-                builder.Append(item.Key + ":");
-                builder.Append(item.Value.Select(i => i ? '!' : '.').ToArray());
-                builder.Append(Environment.NewLine);
+                builder.Append($"{item.Key:F0}:");
+                builder.Append(string.Join("", item.Value.Select(i => i ? '!' : '.')));
+                builder.AppendLine();
             }
             return builder.ToString();
         }
