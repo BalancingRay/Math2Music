@@ -104,7 +104,7 @@ NumberFormats inputFormat = NumberFormats.Dec;
 NumberFormats[] outFormats = new NumberFormats[] { NumberFormats.Dec };
 while (true)
 {
-    Console.WriteLine($"Please send numeric input in {inputFormat} format. (or set numeric system. 2 for BIN)");
+    Console.WriteLine($"Please send numeric input in {inputFormat} format. (or set numeric system. 2 for BIN, 32 for Base32)");
     string? input = Console.ReadLine();
 
     //Console.WriteLine("Please send numeric input in DEC format");
@@ -125,7 +125,7 @@ while (true)
 
     input = input.ToUpper();
 
-    Console.WriteLine($"Set prefer numeric systems: 2,4,8,10,16 or skip. Current is {outFormats[0]}");
+    Console.WriteLine($"Set prefer numeric systems: 2,4,8,10,16,32 or skip. Current is {outFormats[0]}");
     string? preferFormatString = Console.ReadLine();
     if (string.IsNullOrEmpty(preferFormatString) is false)
     {
