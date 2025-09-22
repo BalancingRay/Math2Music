@@ -1,7 +1,8 @@
+using MathToMusic.Contracts;
 using MathToMusic.Models;
 using MathToMusic.Outputs;
 using MathToMusic.Processors;
-using MathToMusic.Contracts;
+using MathToMusic.Utils;
 using NUnit.Framework;
 
 namespace MathToMusic.Tests
@@ -9,6 +10,17 @@ namespace MathToMusic.Tests
     [TestFixture]
     public class ProcessorComparisonTests
     {
+        [TestCase("1000100010010010101111", NumberFormats.Hex, NumberFormats.Hex)]
+        [TestCase("1000100010010010101111", NumberFormats.Dec, NumberFormats.Dec)]
+        [TestCase("124124124212421", NumberFormats.Dec, NumberFormats.Dec)]
+        [TestCase("124124124212421", NumberFormats.Hex, NumberFormats.Hex)]
+        [TestCase(CommonNumbers.Pi100Value, NumberFormats.Hex, NumberFormats.Hex)]
+        [TestCase(CommonNumbers.Pi100Value, NumberFormats.Dec, NumberFormats.Dec)]
+        public void CompareProcessors_WithTestData(string input, NumberFormats inputFormat, NumberFormats outputFormat)
+        {
+            CompareProcessorsForInput(input, inputFormat, outputFormat);
+        }
+
         [Test]
         public void CompareProcessors_WithTestData_100100100()
         {
@@ -37,7 +49,7 @@ namespace MathToMusic.Tests
             CompareProcessorsForInput(input);
         }
 
-        private void CompareProcessorsForInput(string input)
+        private void CompareProcessorsForInput(string input, NumberFormats inputFormat = NumberFormats.Dec, NumberFormats outputFormat = NumberFormats.Dec)
         {
             ITonesProcessor singleTrackProcessor = new SingleTrackProcessor();
             ITonesProcessor reachSingleTrackProcessor = new ReachSingleTrackProcessor();
@@ -46,13 +58,13 @@ namespace MathToMusic.Tests
             Console.WriteLine($"=== Comparing processors for input: {input} ===");
 
             // Process with SingleTrackProcessor
-            var singleResult = singleTrackProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            var singleResult = singleTrackProcessor.Process(input, inputFormat, outputFormat);
             Console.WriteLine("SingleTrackProcessor result:");
             var singleTracing = testOutput.GetMelodyTracing(singleResult);
             Console.WriteLine(singleTracing);
 
             // Process with ReachSingleTrackProcessor
-            var reachResult = reachSingleTrackProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
+            var reachResult = reachSingleTrackProcessor.Process(input, inputFormat, outputFormat);
             Console.WriteLine("ReachSingleTrackProcessor result:");
             var reachTracing = testOutput.GetMelodyTracing(reachResult);
             Console.WriteLine(reachTracing);
@@ -116,27 +128,27 @@ namespace MathToMusic.Tests
         public void TestMelodyOutput_FormatValidation()
         {
             Console.WriteLine("=== Testing TestMelodyOutput format ===");
-            
+
             ITonesProcessor processor = new SingleTrackProcessor();
             var testOutput = new TestMelodyOutput(300);
-            
+
             var result = processor.Process("12", NumberFormats.Dec, NumberFormats.Dec);
             var tracing = testOutput.GetMelodyTracing(result);
-            
+
             Console.WriteLine("Output format:");
             Console.WriteLine(tracing);
-            
+
             var lines = tracing.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in lines)
             {
                 Assert.That(line.Contains(':'), Is.True, "Each line should contain frequency:pattern format");
                 Assert.That(line.Split(':').Length, Is.EqualTo(2), "Each line should have exactly one colon separator");
-                
+
                 var parts = line.Split(':');
                 Assert.That(double.TryParse(parts[0], out _), Is.True, "Frequency part should be a valid number");
-                Assert.That(parts[1].All(c => c == '.' || c == '!'), Is.True, "Pattern should only contain . and ! characters");
+                Assert.That(parts[1].All(c => c == '.' || c == '!'), Is.True, "Pattern should only contain . and ! characters, but actually {0}", parts[1]);
             }
-            
+
             Console.WriteLine("✅ Format validation passed");
         }
 
@@ -144,22 +156,22 @@ namespace MathToMusic.Tests
         public void AnalyzeTiming_SingleVsReach_DetailedComparison()
         {
             Console.WriteLine("=== Detailed Timing Analysis ===");
-            
+
             ITonesProcessor singleTrackProcessor = new SingleTrackProcessor();
             ITonesProcessor reachSingleTrackProcessor = new ReachSingleTrackProcessor();
-            
+
             var testInputs = new[] { "100100100", "10101010", "1122112211", "121212121" };
-            
+
             foreach (var input in testInputs)
             {
                 Console.WriteLine($"\n--- Analysis for input: {input} ---");
-                
+
                 var singleResult = singleTrackProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
                 var reachResult = reachSingleTrackProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
-                
+
                 Console.WriteLine($"SingleTrack: {singleResult.Count} sequence(s), total duration: {singleResult[0].TotalDuration.TotalMilliseconds}ms");
                 Console.WriteLine($"ReachTrack: {reachResult.Count} sequence(s), total duration: {reachResult[0].TotalDuration.TotalMilliseconds}ms");
-                
+
                 // Analyze tone timing for single track
                 if (singleResult.Count > 0)
                 {
@@ -173,7 +185,7 @@ namespace MathToMusic.Tests
                         currentTime += tone.Duration;
                     }
                 }
-                
+
                 // Analyze tone timing for reach tracks
                 Console.WriteLine("ReachTrack tone timings:");
                 foreach (var sequence in reachResult)
@@ -189,7 +201,7 @@ namespace MathToMusic.Tests
                     }
                 }
             }
-            
+
             Console.WriteLine("\n✅ Detailed timing analysis complete");
         }
     }
