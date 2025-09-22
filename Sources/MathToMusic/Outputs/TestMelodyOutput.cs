@@ -23,7 +23,7 @@ namespace MathToMusic.Outputs
             }
             int maxProcessedTact = (int)(durationLimit / discretization) + 1;
 
-            Dictionary<double, bool[]> notesUsings = new Dictionary<double, bool[]>();
+            Dictionary<string, bool[]> notesUsings = new Dictionary<string, bool[]>();
 
             foreach (var sequention in input)
             {
@@ -31,9 +31,11 @@ namespace MathToMusic.Outputs
                 foreach (var note in sequention.Tones)
                 {
                     bool[]? data;
-                    if (!notesUsings.TryGetValue(note.BaseTone, out data))
+                    string toneKey = ((int)Math.Round(note.BaseTone, 0)).ToString();
+                    if (!notesUsings.TryGetValue(toneKey, out data))
                     {
                         data = new bool[maxProcessedTact];
+                        notesUsings[toneKey] = data;
                     }
                     int length = (int)Math.Round(note.Duration / discretization, 0);
 
@@ -44,8 +46,8 @@ namespace MathToMusic.Outputs
             var builder = new StringBuilder();
             foreach (var item in notesUsings.ToList().OrderBy(i => i.Key))
             {
-                builder.Append(item.Key);
-                builder.Append(item.Value.Select(i => i ? '+' : ' ').ToArray());
+                builder.Append(item.Key + ":");
+                builder.Append(item.Value.Select(i => i ? '!' : '.').ToArray());
                 builder.Append(Environment.NewLine);
             }
             return builder.ToString();
