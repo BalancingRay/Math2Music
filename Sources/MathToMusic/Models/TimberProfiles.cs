@@ -34,7 +34,7 @@ namespace MathToMusic.Models
             ["Bell"] = new float[] { 1.0f, 0.2f, 0.4f, 0.1f, 0.6f, 0.3f, 0.5f },
             ["Pad"] = new float[] { 1.0f, 0.9f, 0.7f, 0.8f, 0.6f, 0.7f, 0.5f }, // Rich harmonics
             ["Sine"] = new float[] { 1.0f }, // Pure sine wave (fundamental only)
-            
+
             // Special Effects
             ["Hollow"] = new float[] { 0.5f, 0.0f, 0.8f, 0.0f, 0.6f, 0.0f, 0.4f }, // Missing even harmonics
             ["Nasal"] = new float[] { 1.0f, 0.3f, 0.9f, 0.4f, 0.8f, 0.5f }, // Emphasis on 3rd and 5th harmonics
@@ -47,7 +47,7 @@ namespace MathToMusic.Models
         /// </summary>
         public static IEnumerable<string> GetAvailableProfiles()
         {
-            return Profiles.Keys.OrderBy(k => k);
+            return Profiles.Keys;
         }
 
         /// <summary>

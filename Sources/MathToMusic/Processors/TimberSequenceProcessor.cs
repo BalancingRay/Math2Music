@@ -1,17 +1,21 @@
 using MathToMusic.Contracts;
-using MathToMusic.Models;
 
 namespace MathToMusic.Processors
 {
     /// <summary>
     /// Sequence processor that applies timber profiles to sequences by calculating overtones and coefficients
     /// </summary>
-    public class TimberSequenceProcessor : ISequenceProcessor<float[]>
+    public class TimberSequenceProcessor : ISequenceProcessor
     {
+        float[] timber;
+        public TimberSequenceProcessor(float[] timber)
+        {
+            this.timber = timber;
+        }
         /// <summary>
         /// Process a single sequence applying the timber profile
         /// </summary>
-        public Sequiention Process(Sequiention sequence, float[] timber)
+        public Sequiention Process(Sequiention sequence)
         {
             if (sequence == null)
                 throw new ArgumentNullException(nameof(sequence));
@@ -21,7 +25,7 @@ namespace MathToMusic.Processors
 
             // Create new sequence with processed tones and applied timber
             var processedTones = new List<Tone>();
-            
+
             foreach (var tone in sequence.Tones)
             {
                 var processedTone = ProcessTone(tone, timber);
@@ -40,16 +44,16 @@ namespace MathToMusic.Processors
         /// <summary>
         /// Process multiple sequences with the same timber
         /// </summary>
-        public IList<Sequiention> Process(IList<Sequiention> sequences, float[] timber)
+        public IList<Sequiention> Process(IList<Sequiention> sequences)
         {
             if (sequences == null)
                 throw new ArgumentNullException(nameof(sequences));
 
             var processedSequences = new List<Sequiention>();
-            
+
             foreach (var sequence in sequences)
             {
-                processedSequences.Add(Process(sequence, timber));
+                processedSequences.Add(Process(sequence));
             }
 
             return processedSequences;
@@ -65,10 +69,10 @@ namespace MathToMusic.Processors
                 return tone;
 
             double fundamentalFreq = tone.ObertonFrequencies[0];
-            
+
             // Generate overtones: fundamental + harmonics (2x, 3x, 4x, etc.)
             var overtones = new List<double>();
-            
+
             for (int i = 0; i < timberCoefficients.Length; i++)
             {
                 // Generate harmonic frequency (i+1 because harmonic series starts at 1x fundamental)
@@ -81,42 +85,6 @@ namespace MathToMusic.Processors
                 Duration = tone.Duration,
                 ObertonFrequencies = overtones.ToArray()
             };
-        }
-
-        /// <summary>
-        /// Create a sequence processor for a specific timber profile
-        /// </summary>
-        public static TimberSequenceProcessor ForProfile(string profileName)
-        {
-            var processor = new TimberSequenceProcessor();
-            return processor;
-        }
-
-        /// <summary>
-        /// Apply a timber profile to a sequence
-        /// </summary>
-        public static Sequiention ApplyTimber(Sequiention sequence, string timberProfileName)
-        {
-            if (sequence == null)
-                throw new ArgumentNullException(nameof(sequence));
-
-            var timberProfile = TimberProfiles.GetProfile(timberProfileName);
-            if (timberProfile == null)
-                throw new ArgumentException($"Unknown timber profile: {timberProfileName}", nameof(timberProfileName));
-
-            var processor = new TimberSequenceProcessor();
-            return processor.Process(sequence, timberProfile);
-        }
-
-        /// <summary>
-        /// Apply timber profiles to multiple sequences
-        /// </summary>
-        public static IList<Sequiention> ApplyTimber(IList<Sequiention> sequences, string timberProfileName)
-        {
-            if (sequences == null)
-                throw new ArgumentNullException(nameof(sequences));
-
-            return sequences.Select(seq => ApplyTimber(seq, timberProfileName)).ToList();
         }
     }
 }

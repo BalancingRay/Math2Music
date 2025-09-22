@@ -48,14 +48,15 @@ namespace MathToMusic.Tests
             };
 
             // Apply Piano timber
-            var processedSequence = TimberSequenceProcessor.ApplyTimber(sequence, "Piano");
+            var processor = new TimberSequenceProcessor(TimberProfiles.GetProfile("Piano"));
+            var processedSequence = processor.Process(sequence);
 
             Assert.That(processedSequence.Timber, Is.Not.Null);
             Assert.That(processedSequence.Tones.Count, Is.EqualTo(1));
-            
+
             var processedTone = processedSequence.Tones[0];
             Assert.That(processedTone.ObertonFrequencies.Length, Is.GreaterThan(1));
-            
+
             // Check that overtones are harmonics of the fundamental
             Assert.That(processedTone.ObertonFrequencies[0], Is.EqualTo(440.0)); // Fundamental
             Assert.That(processedTone.ObertonFrequencies[1], Is.EqualTo(880.0)); // 2nd harmonic
@@ -76,7 +77,8 @@ namespace MathToMusic.Tests
                 }
             };
 
-            var processedSequence = TimberSequenceProcessor.ApplyTimber(originalSequence, "Guitar");
+            var processor = new TimberSequenceProcessor(TimberProfiles.GetProfile("Guitar"));
+            var processedSequence = processor.Process(originalSequence);
 
             Assert.That(processedSequence.TotalDuration, Is.EqualTo(originalSequence.TotalDuration));
             Assert.That(processedSequence.Title, Is.EqualTo(originalSequence.Title));
@@ -103,31 +105,18 @@ namespace MathToMusic.Tests
                 }
             };
 
-            var processedSequence = TimberSequenceProcessor.ApplyTimber(sequence, "Piano");
+            var processor = new TimberSequenceProcessor(TimberProfiles.GetProfile("Piano"));
+            var processedSequence = processor.Process(sequence);
 
             Assert.That(processedSequence.Tones.Count, Is.EqualTo(2));
-            
+
             // Silence tone should remain silence
             var silentTone = processedSequence.Tones[0];
             Assert.That(silentTone.ObertonFrequencies[0], Is.EqualTo(0.0));
-            
+
             // Regular tone should have overtones
             var audibleTone = processedSequence.Tones[1];
             Assert.That(audibleTone.ObertonFrequencies.Length, Is.GreaterThan(1));
-        }
-
-        [Test]
-        public void TimberSequenceProcessor_InvalidProfileThrowsException()
-        {
-            var sequence = new Sequiention
-            {
-                TotalDuration = TimeSpan.FromSeconds(1),
-                Title = "Test",
-                Tones = new List<Tone> { new Tone(440.0, 1000) }
-            };
-
-            Assert.Throws<ArgumentException>(() => 
-                TimberSequenceProcessor.ApplyTimber(sequence, "NonexistentProfile"));
         }
 
         [Test]
@@ -143,14 +132,14 @@ namespace MathToMusic.Tests
                 },
                 new Sequiention
                 {
-                    TotalDuration = TimeSpan.FromSeconds(1), 
+                    TotalDuration = TimeSpan.FromSeconds(1),
                     Title = "Seq2",
                     Tones = new List<Tone> { new Tone(880.0, 1000) }
                 }
             };
 
-            var processedSequences = TimberSequenceProcessor.ApplyTimber(sequences, "Violin");
-
+            var processor = new TimberSequenceProcessor(TimberProfiles.GetProfile("Violin"));
+            var processedSequences = processor.Process(sequences);
             Assert.That(processedSequences.Count, Is.EqualTo(2));
             foreach (var seq in processedSequences)
             {
@@ -162,8 +151,8 @@ namespace MathToMusic.Tests
         [Test]
         public void ISequenceProcessor_Interface_Works()
         {
-            ISequenceProcessor<float[]> processor = new TimberSequenceProcessor();
-            
+            ISequenceProcessor processor = new TimberSequenceProcessor(TimberProfiles.GetProfile("Organ"));
+
             var sequence = new Sequiention
             {
                 TotalDuration = TimeSpan.FromSeconds(1),
@@ -171,44 +160,23 @@ namespace MathToMusic.Tests
                 Tones = new List<Tone> { new Tone(440.0, 1000) }
             };
 
-            var timberProfile = TimberProfiles.GetProfile("Organ");
-            var processedSequence = processor.Process(sequence, timberProfile);
-            
+            var processedSequence = processor.Process(sequence);
+
             Assert.That(processedSequence.Tones[0].ObertonFrequencies.Length, Is.GreaterThan(1));
-        }
-
-        [Test]
-        public void SequenceWithoutTimber_RemainsUnchanged()
-        {
-            var processor = new TimberSequenceProcessor();
-            
-            var originalSequence = new Sequiention
-            {
-                TotalDuration = TimeSpan.FromSeconds(1),
-                Title = "No Timber",
-                Tones = new List<Tone> { new Tone(440.0, 1000) }
-                // No Timber property set
-            };
-
-            var processedSequence = processor.Process(originalSequence, null);
-            
-            // Should return the same sequence since no timber processing is applied
-            Assert.That(processedSequence.TotalDuration, Is.EqualTo(originalSequence.TotalDuration));
-            Assert.That(processedSequence.Title, Is.EqualTo(originalSequence.Title));
         }
 
         [Test]
         public void GetAvailableProfiles_ReturnsExpectedProfiles()
         {
             var profiles = TimberProfiles.GetAvailableProfiles().ToList();
-            
+
             Assert.That(profiles.Count, Is.GreaterThan(10));
             Assert.That(profiles, Contains.Item("Piano"));
             Assert.That(profiles, Contains.Item("Guitar"));
             Assert.That(profiles, Contains.Item("Sine"));
             Assert.That(profiles, Contains.Item("Sawtooth"));
             Assert.That(profiles, Contains.Item("Square"));
-            
+
             // Should be sorted
             var sortedProfiles = profiles.OrderBy(p => p).ToList();
             Assert.That(profiles, Is.EqualTo(sortedProfiles));
