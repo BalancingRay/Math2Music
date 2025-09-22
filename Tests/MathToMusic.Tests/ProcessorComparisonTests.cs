@@ -139,5 +139,58 @@ namespace MathToMusic.Tests
             
             Console.WriteLine("✅ Format validation passed");
         }
+
+        [Test]
+        public void AnalyzeTiming_SingleVsReach_DetailedComparison()
+        {
+            Console.WriteLine("=== Detailed Timing Analysis ===");
+            
+            ITonesProcessor singleTrackProcessor = new SingleTrackProcessor();
+            ITonesProcessor reachSingleTrackProcessor = new ReachSingleTrackProcessor();
+            
+            var testInputs = new[] { "100100100", "10101010", "1122112211", "121212121" };
+            
+            foreach (var input in testInputs)
+            {
+                Console.WriteLine($"\n--- Analysis for input: {input} ---");
+                
+                var singleResult = singleTrackProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
+                var reachResult = reachSingleTrackProcessor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
+                
+                Console.WriteLine($"SingleTrack: {singleResult.Count} sequence(s), total duration: {singleResult[0].TotalDuration.TotalMilliseconds}ms");
+                Console.WriteLine($"ReachTrack: {reachResult.Count} sequence(s), total duration: {reachResult[0].TotalDuration.TotalMilliseconds}ms");
+                
+                // Analyze tone timing for single track
+                if (singleResult.Count > 0)
+                {
+                    Console.WriteLine("SingleTrack tone timings:");
+                    var currentTime = TimeSpan.Zero;
+                    for (int i = 0; i < singleResult[0].Tones.Count; i++)
+                    {
+                        var tone = singleResult[0].Tones[i];
+                        if (tone.BaseTone > 0)
+                            Console.WriteLine($"  Position {i}: {tone.BaseTone}Hz at {currentTime.TotalMilliseconds}ms, duration: {tone.Duration.TotalMilliseconds}ms");
+                        currentTime += tone.Duration;
+                    }
+                }
+                
+                // Analyze tone timing for reach tracks
+                Console.WriteLine("ReachTrack tone timings:");
+                foreach (var sequence in reachResult)
+                {
+                    Console.WriteLine($"  Track '{sequence.Title}':");
+                    var currentTime = TimeSpan.Zero;
+                    for (int i = 0; i < sequence.Tones.Count; i++)
+                    {
+                        var tone = sequence.Tones[i];
+                        if (tone.BaseTone > 0)
+                            Console.WriteLine($"    Position {i}: {tone.BaseTone}Hz at {currentTime.TotalMilliseconds}ms, duration: {tone.Duration.TotalMilliseconds}ms");
+                        currentTime += tone.Duration;
+                    }
+                }
+            }
+            
+            Console.WriteLine("\n✅ Detailed timing analysis complete");
+        }
     }
 }

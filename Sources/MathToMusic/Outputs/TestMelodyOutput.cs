@@ -33,9 +33,11 @@ namespace MathToMusic.Outputs
 
             foreach (var sequention in input)
             {
-                TimeSpan currentTime = TimeSpan.Zero;
-                foreach (var note in sequention.Tones)
+                // For each tone sequence, calculate the position based on base duration intervals
+                // rather than accumulating actual tone durations
+                for (int i = 0; i < sequention.Tones.Count; i++)
                 {
+                    var note = sequention.Tones[i];
                     if (note.BaseTone > 0) // Skip silence (0 Hz)
                     {
                         if (!notesUsings.TryGetValue(note.BaseTone, out var data))
@@ -44,13 +46,13 @@ namespace MathToMusic.Outputs
                             notesUsings[note.BaseTone] = data;
                         }
 
-                        int startPosition = (int)(currentTime / discretization);
-                        if (startPosition < maxProcessedTact)
+                        // Calculate position based on tone index, not accumulated duration
+                        int position = (int)((i * discretization.TotalMilliseconds) / discretization.TotalMilliseconds);
+                        if (position < maxProcessedTact)
                         {
-                            data[startPosition] = true;
+                            data[position] = true;
                         }
                     }
-                    currentTime += note.Duration;
                 }
             }
 
