@@ -149,7 +149,7 @@ namespace MathToMusic.Outputs
             foreach (var tone in sequence.Tones)
             {
                 int toneSamples = (int)(tone.Duration.TotalSeconds * SampleRate);
-                GenerateToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequence);
+                GenerateToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequence?.Timber);
                 sampleIndex += toneSamples;
             }
 
@@ -183,7 +183,7 @@ namespace MathToMusic.Outputs
                     int toneSamples = (int)(tone.Duration.TotalSeconds * SampleRate);
                     if (sampleIndex + toneSamples <= totalSamples)
                     {
-                        AddToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequenceAmplitudeScaling, leftCoeff, rightCoeff, sequence);
+                        AddToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequenceAmplitudeScaling, leftCoeff, rightCoeff, sequence?.Timber);
                     }
                     sampleIndex += toneSamples;
                 }
@@ -201,7 +201,7 @@ namespace MathToMusic.Outputs
             return (int)(maxDurationSeconds * SampleRate);
         }
 
-        private void GenerateToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, Sequiention sequence = null)
+        private void GenerateToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, float[] timberCoefficients = null)
         {
             if (tone.ObertonFrequencies.Length == 0 || tone.ObertonFrequencies[0] == 0) // Rest/silence
             {
@@ -209,8 +209,7 @@ namespace MathToMusic.Outputs
                 return;
             }
 
-            // If we have timber information from the sequence, use it to weight overtones
-            float[] timberCoefficients = sequence?.Timber;
+            // Timber coefficients are now passed directly as parameter
             
             for (int i = 0; i < sampleCount; i++)
             {
@@ -247,25 +246,25 @@ namespace MathToMusic.Outputs
             }
         }
 
-        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, Sequiention sequence = null)
+        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, float[] timberCoefficients = null)
         {
-            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, 1.0, 1.0, 1.0, sequence);
+            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, 1.0, 1.0, 1.0, timberCoefficients);
         }
 
-        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling, Sequiention sequence = null)
+        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling, float[] timberCoefficients = null)
         {
-            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, additionalScaling, 1.0, 1.0, sequence);
+            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, additionalScaling, 1.0, 1.0, timberCoefficients);
         }
 
-        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling, double leftCoeff, double rightCoeff, Sequiention sequence = null)
+        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling, double leftCoeff, double rightCoeff, float[] timberCoefficients = null)
         {
             if (tone.ObertonFrequencies.Length == 0 || tone.ObertonFrequencies[0] == 0) // Rest/silence
             {
                 return;
             }
 
-            // If we have timber information from the sequence, use it to weight overtones
-            float[] timberCoefficients = sequence?.Timber;
+            // Timber coefficients are now passed directly as parameter
+            // float[] timberCoefficients parameter is already provided
 
             for (int i = 0; i < sampleCount; i++)
             {

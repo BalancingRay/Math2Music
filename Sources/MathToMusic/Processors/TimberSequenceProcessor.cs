@@ -6,7 +6,7 @@ namespace MathToMusic.Processors
     /// <summary>
     /// Sequence processor that applies timber profiles to sequences by calculating overtones and coefficients
     /// </summary>
-    public class TimberSequenceProcessor : ISequenceProcessor
+    public class TimberSequenceProcessor : ISequenceProcessor<Sequiention>
     {
         /// <summary>
         /// Process a single sequence applying the timber profile

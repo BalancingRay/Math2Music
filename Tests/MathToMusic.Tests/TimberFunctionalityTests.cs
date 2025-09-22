@@ -162,7 +162,7 @@ namespace MathToMusic.Tests
         [Test]
         public void ISequenceProcessor_Interface_Works()
         {
-            ISequenceProcessor processor = new TimberSequenceProcessor();
+            ISequenceProcessor<Sequiention> processor = new TimberSequenceProcessor();
             
             var sequence = new Sequiention
             {
