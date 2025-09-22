@@ -6,26 +6,25 @@ namespace MathToMusic.Processors
     /// <summary>
     /// Sequence processor that applies timber profiles to sequences by calculating overtones and coefficients
     /// </summary>
-    public class TimberSequenceProcessor : ISequenceProcessor<Sequiention>
+    public class TimberSequenceProcessor : ISequenceProcessor<float[]>
     {
         /// <summary>
         /// Process a single sequence applying the timber profile
         /// </summary>
-        public Sequiention Process(Sequiention sequence)
+        public Sequiention Process(Sequiention sequence, float[] timber)
         {
             if (sequence == null)
                 throw new ArgumentNullException(nameof(sequence));
 
-            // If no timber is set, return original sequence
-            if (sequence.Timber == null || sequence.Timber.Length == 0)
+            if (timber == null || timber.Length == 0)
                 return sequence;
 
-            // Create new sequence with processed tones
+            // Create new sequence with processed tones and applied timber
             var processedTones = new List<Tone>();
             
             foreach (var tone in sequence.Tones)
             {
-                var processedTone = ProcessTone(tone, sequence.Timber);
+                var processedTone = ProcessTone(tone, timber);
                 processedTones.Add(processedTone);
             }
 
@@ -34,14 +33,14 @@ namespace MathToMusic.Processors
                 TotalDuration = sequence.TotalDuration,
                 Tones = processedTones,
                 Title = sequence.Title,
-                Timber = sequence.Timber // Keep the original timber reference
+                Timber = timber // Apply the passed timber to the sequence
             };
         }
 
         /// <summary>
-        /// Process multiple sequences
+        /// Process multiple sequences with the same timber
         /// </summary>
-        public IList<Sequiention> Process(IList<Sequiention> sequences)
+        public IList<Sequiention> Process(IList<Sequiention> sequences, float[] timber)
         {
             if (sequences == null)
                 throw new ArgumentNullException(nameof(sequences));
@@ -50,7 +49,7 @@ namespace MathToMusic.Processors
             
             foreach (var sequence in sequences)
             {
-                processedSequences.Add(Process(sequence));
+                processedSequences.Add(Process(sequence, timber));
             }
 
             return processedSequences;
@@ -105,17 +104,8 @@ namespace MathToMusic.Processors
             if (timberProfile == null)
                 throw new ArgumentException($"Unknown timber profile: {timberProfileName}", nameof(timberProfileName));
 
-            // Clone the sequence and set the timber
-            var sequenceWithTimber = new Sequiention
-            {
-                TotalDuration = sequence.TotalDuration,
-                Tones = sequence.Tones,
-                Title = sequence.Title,
-                Timber = timberProfile
-            };
-
             var processor = new TimberSequenceProcessor();
-            return processor.Process(sequenceWithTimber);
+            return processor.Process(sequence, timberProfile);
         }
 
         /// <summary>

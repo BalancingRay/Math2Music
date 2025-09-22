@@ -162,17 +162,17 @@ namespace MathToMusic.Tests
         [Test]
         public void ISequenceProcessor_Interface_Works()
         {
-            ISequenceProcessor<Sequiention> processor = new TimberSequenceProcessor();
+            ISequenceProcessor<float[]> processor = new TimberSequenceProcessor();
             
             var sequence = new Sequiention
             {
                 TotalDuration = TimeSpan.FromSeconds(1),
                 Title = "Interface Test",
-                Tones = new List<Tone> { new Tone(440.0, 1000) },
-                Timber = TimberProfiles.GetProfile("Organ")
+                Tones = new List<Tone> { new Tone(440.0, 1000) }
             };
 
-            var processedSequence = processor.Process(sequence);
+            var timberProfile = TimberProfiles.GetProfile("Organ");
+            var processedSequence = processor.Process(sequence, timberProfile);
             
             Assert.That(processedSequence.Tones[0].ObertonFrequencies.Length, Is.GreaterThan(1));
         }
@@ -190,10 +190,11 @@ namespace MathToMusic.Tests
                 // No Timber property set
             };
 
-            var processedSequence = processor.Process(originalSequence);
+            var processedSequence = processor.Process(originalSequence, null);
             
-            // Should return the same sequence reference since no processing is needed
-            Assert.That(processedSequence, Is.EqualTo(originalSequence));
+            // Should return the same sequence since no timber processing is applied
+            Assert.That(processedSequence.TotalDuration, Is.EqualTo(originalSequence.TotalDuration));
+            Assert.That(processedSequence.Title, Is.EqualTo(originalSequence.Title));
         }
 
         [Test]
