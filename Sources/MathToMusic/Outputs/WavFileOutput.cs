@@ -149,7 +149,7 @@ namespace MathToMusic.Outputs
             foreach (var tone in sequence.Tones)
             {
                 int toneSamples = (int)(tone.Duration.TotalSeconds * SampleRate);
-                GenerateToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples);
+                GenerateToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequence?.Timber);
                 sampleIndex += toneSamples;
             }
 
@@ -183,7 +183,7 @@ namespace MathToMusic.Outputs
                     int toneSamples = (int)(tone.Duration.TotalSeconds * SampleRate);
                     if (sampleIndex + toneSamples <= totalSamples)
                     {
-                        AddToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequenceAmplitudeScaling, leftCoeff, rightCoeff);
+                        AddToneSamples(tone, leftChannel, rightChannel, sampleIndex, toneSamples, sequenceAmplitudeScaling, leftCoeff, rightCoeff, sequence?.Timber);
                     }
                     sampleIndex += toneSamples;
                 }
@@ -201,60 +201,103 @@ namespace MathToMusic.Outputs
             return (int)(maxDurationSeconds * SampleRate);
         }
 
-        private void GenerateToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount)
+        private void GenerateToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, float[] timberCoefficients = null)
         {
-            if (tone.ObertonFrequencies[0] == 0) // Rest/silence
+            if (tone.ObertonFrequencies.Length == 0 || tone.ObertonFrequencies[0] == 0) // Rest/silence
             {
                 // Leave samples as 0 (silence)
                 return;
             }
 
-            double frequency = tone.ObertonFrequencies[0];
-            double amplitude = CalculateAmplitudeForFrequency(frequency, BaseAmplitude);
-
+            // Timber coefficients are now passed directly as parameter
+            
             for (int i = 0; i < sampleCount; i++)
             {
                 if (startIndex + i < leftChannel.Length)
                 {
                     double time = (double)i / SampleRate;
-                    float sample = (float)(amplitude * Math.Sin(2 * Math.PI * frequency * time));
+                    float totalSample = 0.0f;
 
-                    leftChannel[startIndex + i] = sample;
-                    rightChannel[startIndex + i] = sample;
+                    // Generate samples for all overtones
+                    for (int overtoneIndex = 0; overtoneIndex < tone.ObertonFrequencies.Length; overtoneIndex++)
+                    {
+                        double frequency = tone.ObertonFrequencies[overtoneIndex];
+                        if (frequency > 0)
+                        {
+                            // Get timber coefficient for this overtone (default to 1.0 if not available)
+                            float timberCoeff = 1.0f;
+                            if (timberCoefficients != null && overtoneIndex < timberCoefficients.Length)
+                            {
+                                timberCoeff = timberCoefficients[overtoneIndex];
+                            }
+
+                            if (timberCoeff > 0) // Only generate sound for positive coefficients
+                            {
+                                double amplitude = CalculateAmplitudeForFrequency(frequency, BaseAmplitude) * timberCoeff;
+                                float sample = (float)(amplitude * Math.Sin(2 * Math.PI * frequency * time));
+                                totalSample += sample;
+                            }
+                        }
+                    }
+
+                    leftChannel[startIndex + i] = totalSample;
+                    rightChannel[startIndex + i] = totalSample;
                 }
             }
         }
 
-        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount)
+        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, float[] timberCoefficients = null)
         {
-            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, 1.0, 1.0, 1.0);
+            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, 1.0, 1.0, 1.0, timberCoefficients);
         }
 
-        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling)
+        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling, float[] timberCoefficients = null)
         {
-            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, additionalScaling, 1.0, 1.0);
+            AddToneSamples(tone, leftChannel, rightChannel, startIndex, sampleCount, additionalScaling, 1.0, 1.0, timberCoefficients);
         }
 
-        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling, double leftCoeff, double rightCoeff)
+        private void AddToneSamples(Tone tone, float[] leftChannel, float[] rightChannel, int startIndex, int sampleCount, double additionalScaling, double leftCoeff, double rightCoeff, float[] timberCoefficients = null)
         {
-            if (tone.ObertonFrequencies[0] == 0) // Rest/silence
+            if (tone.ObertonFrequencies.Length == 0 || tone.ObertonFrequencies[0] == 0) // Rest/silence
             {
                 return;
             }
 
-            double frequency = tone.ObertonFrequencies[0];
-            double amplitude = CalculateAmplitudeForFrequency(frequency, BaseAmplitude) * additionalScaling;
+            // Timber coefficients are now passed directly as parameter
+            // float[] timberCoefficients parameter is already provided
 
             for (int i = 0; i < sampleCount; i++)
             {
                 if (startIndex + i < leftChannel.Length)
                 {
                     double time = (double)i / SampleRate;
-                    float sample = (float)(amplitude * Math.Sin(2 * Math.PI * frequency * time));
+                    float totalSample = 0.0f;
+
+                    // Generate samples for all overtones
+                    for (int overtoneIndex = 0; overtoneIndex < tone.ObertonFrequencies.Length; overtoneIndex++)
+                    {
+                        double frequency = tone.ObertonFrequencies[overtoneIndex];
+                        if (frequency > 0)
+                        {
+                            // Get timber coefficient for this overtone (default to 1.0 if not available)
+                            float timberCoeff = 1.0f;
+                            if (timberCoefficients != null && overtoneIndex < timberCoefficients.Length)
+                            {
+                                timberCoeff = timberCoefficients[overtoneIndex];
+                            }
+
+                            if (timberCoeff > 0) // Only generate sound for positive coefficients
+                            {
+                                double amplitude = CalculateAmplitudeForFrequency(frequency, BaseAmplitude) * additionalScaling * timberCoeff;
+                                float sample = (float)(amplitude * Math.Sin(2 * Math.PI * frequency * time));
+                                totalSample += sample;
+                            }
+                        }
+                    }
 
                     // Apply stereo coefficients
-                    leftChannel[startIndex + i] += sample * (float)leftCoeff;
-                    rightChannel[startIndex + i] += sample * (float)rightCoeff;
+                    leftChannel[startIndex + i] += totalSample * (float)leftCoeff;
+                    rightChannel[startIndex + i] += totalSample * (float)rightCoeff;
                 }
             }
         }

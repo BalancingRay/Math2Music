@@ -27,5 +27,6 @@
         public TimeSpan TotalDuration { get; set; }
         public IList<Tone> Tones { get; set; }
         public string Title { get; set; }
+        public float[]? Timber { get; set; }
     }
 }
