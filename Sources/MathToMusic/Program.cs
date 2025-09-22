@@ -15,13 +15,13 @@ Console.WriteLine();
 // Session Configuration
 double baseTone = 180; // Default base tone
 int baseDuration = 300; // Default base duration
-
+string? selectedTimberProfile = null; // Defalut timber
 Console.WriteLine("=== SESSION CONFIGURATION ===");
 Console.WriteLine($"Current sound settings - Base Tone: {baseTone}Hz, Duration: {baseDuration}ms");
 Console.Write("Would you like to configure sound settings? (y/N): ");
 string? configChoice = Console.ReadLine();
-
-if (!string.IsNullOrEmpty(configChoice) && configChoice.ToLower().StartsWith("y"))
+bool startSettings = !string.IsNullOrEmpty(configChoice) && configChoice.ToLower().StartsWith("y");
+if (startSettings)
 {
     Console.Write($"Enter base tone frequency in Hz (current: {baseTone}): ");
     string? toneInput = Console.ReadLine();
@@ -38,46 +38,47 @@ if (!string.IsNullOrEmpty(configChoice) && configChoice.ToLower().StartsWith("y"
     }
 
     Console.WriteLine($"Sound settings updated - Base Tone: {baseTone}Hz, Duration: {baseDuration}ms");
-}
-Console.WriteLine("Do you want to apply a timber profile? Enter profile name or skip:");
-Console.WriteLine("Available profiles:");
-var availableProfiles = TimberProfiles.GetAvailableProfiles().ToList();
-for (int i = 0; i < availableProfiles.Count; i++)
-{
-    Console.WriteLine($"  {i + 1:D2}. {availableProfiles[i]}");
-}
-Console.WriteLine("  (Enter number 1-{0} or profile name, or press Enter to skip)", availableProfiles.Count);
 
-string? timberSelection = Console.ReadLine();
-string? selectedTimberProfile = null;
+    Console.WriteLine("Do you want to apply a timber profile? Enter profile name or skip:");
+    Console.WriteLine("Available profiles:");
+    var availableProfiles = TimberProfiles.GetAvailableProfiles().ToList();
+    for (int i = 0; i < availableProfiles.Count; i++)
+    {
+        Console.WriteLine($"  {i + 1:D2}. {availableProfiles[i]}");
+    }
+    Console.WriteLine("(Enter number 1-{0} or profile name, or press Enter to skip)", availableProfiles.Count);
 
-if (!string.IsNullOrEmpty(timberSelection))
-{
-    // Try to parse as number first
-    if (int.TryParse(timberSelection, out int profileNumber) &&
-        profileNumber >= 1 && profileNumber <= availableProfiles.Count)
-    {
-        selectedTimberProfile = availableProfiles[profileNumber - 1];
-    }
-    // Try direct profile name
-    else if (TimberProfiles.HasProfile(timberSelection))
-    {
-        selectedTimberProfile = timberSelection;
-    }
-    // Try case-insensitive match
-    else
-    {
-        selectedTimberProfile = availableProfiles
-            .FirstOrDefault(p => p.Equals(timberSelection, StringComparison.OrdinalIgnoreCase));
-    }
+    string? timberSelection = Console.ReadLine();
 
-    if (selectedTimberProfile != null)
+
+    if (!string.IsNullOrEmpty(timberSelection))
     {
-        Console.WriteLine($"Selected timber profile: {selectedTimberProfile}");
-    }
-    else
-    {
-        Console.WriteLine($"Unknown timber profile '{timberSelection}'. Continuing without timber.");
+        // Try to parse as number first
+        if (int.TryParse(timberSelection, out int profileNumber) &&
+            profileNumber >= 1 && profileNumber <= availableProfiles.Count)
+        {
+            selectedTimberProfile = availableProfiles[profileNumber - 1];
+        }
+        // Try direct profile name
+        else if (TimberProfiles.HasProfile(timberSelection))
+        {
+            selectedTimberProfile = timberSelection;
+        }
+        // Try case-insensitive match
+        else
+        {
+            selectedTimberProfile = availableProfiles
+                .FirstOrDefault(p => p.Equals(timberSelection, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (selectedTimberProfile != null)
+        {
+            Console.WriteLine($"Selected timber profile: {selectedTimberProfile}");
+        }
+        else
+        {
+            Console.WriteLine($"Unknown timber profile '{timberSelection}'. Continuing without timber.");
+        }
     }
 }
 
