@@ -31,15 +31,23 @@ namespace MathToMusic.Tests.Utils
         [TestCase("1010", NumberFormats.Bin, NumberFormats.Oct, ExpectedResult = "12")]
         [TestCase("1010", NumberFormats.Bin, NumberFormats.Hex, ExpectedResult = "A")]
         [TestCase("1010", NumberFormats.Bin, NumberFormats.Qad, ExpectedResult = "22")]
+        [TestCase("1010", NumberFormats.Bin, NumberFormats.Base32, ExpectedResult = "A")]
         [TestCase("12", NumberFormats.Oct, NumberFormats.Bin, ExpectedResult = "1010")]
         [TestCase("12", NumberFormats.Oct, NumberFormats.Hex, ExpectedResult = "A")]
         [TestCase("12", NumberFormats.Oct, NumberFormats.Qad, ExpectedResult = "22")]
+        [TestCase("12", NumberFormats.Oct, NumberFormats.Base32, ExpectedResult = "A")]
         [TestCase("A", NumberFormats.Hex, NumberFormats.Bin, ExpectedResult = "1010")]
         [TestCase("A", NumberFormats.Hex, NumberFormats.Oct, ExpectedResult = "12")]
         [TestCase("A", NumberFormats.Hex, NumberFormats.Qad, ExpectedResult = "22")]
+        [TestCase("A", NumberFormats.Hex, NumberFormats.Base32, ExpectedResult = "A")]
         [TestCase("22", NumberFormats.Qad, NumberFormats.Bin, ExpectedResult = "1010")]
         [TestCase("22", NumberFormats.Qad, NumberFormats.Oct, ExpectedResult = "12")]
         [TestCase("22", NumberFormats.Qad, NumberFormats.Hex, ExpectedResult = "A")]
+        [TestCase("22", NumberFormats.Qad, NumberFormats.Base32, ExpectedResult = "A")]
+        [TestCase("A", NumberFormats.Base32, NumberFormats.Bin, ExpectedResult = "1010")]
+        [TestCase("A", NumberFormats.Base32, NumberFormats.Oct, ExpectedResult = "12")]
+        [TestCase("A", NumberFormats.Base32, NumberFormats.Hex, ExpectedResult = "A")]
+        [TestCase("A", NumberFormats.Base32, NumberFormats.Qad, ExpectedResult = "22")]
         public string Convert_BetweenFormats_ReturnsCorrectResult(string input, NumberFormats from, NumberFormats to)
         {
             return NumberConverter.Convert(input, from, to);
@@ -60,9 +68,12 @@ namespace MathToMusic.Tests.Utils
         [TestCase("101", NumberFormats.Bin, NumberFormats.Dec, ExpectedResult = "5")]
         [TestCase("12", NumberFormats.Oct, NumberFormats.Dec, ExpectedResult = "10")]
         [TestCase("FF", NumberFormats.Hex, NumberFormats.Dec, ExpectedResult = "255")]
+        [TestCase("V", NumberFormats.Base32, NumberFormats.Dec, ExpectedResult = "31")]
         [TestCase("10", NumberFormats.Dec, NumberFormats.Bin, ExpectedResult = "1010")]
         [TestCase("10", NumberFormats.Dec, NumberFormats.Oct, ExpectedResult = "12")]
         [TestCase("10", NumberFormats.Dec, NumberFormats.Hex, ExpectedResult = "A")]
+        [TestCase("10", NumberFormats.Dec, NumberFormats.Base32, ExpectedResult = "A")]
+        [TestCase("31", NumberFormats.Dec, NumberFormats.Base32, ExpectedResult = "V")]
         public string Convert_WithDecimalFormat_ReturnsCorrectResult(string input, NumberFormats from, NumberFormats to)
         {
             return NumberConverter.Convert(input, from, to);
@@ -301,6 +312,72 @@ namespace MathToMusic.Tests.Utils
             // Act & Assert
             Assert.Throws<ArgumentException>(() => 
                 NumberConverter.ConvertLargeDecimalToBinary("12a3")); // 'a' is invalid in decimal
+        }
+
+        [Test]
+        public void Convert_Base32_AllValidCharacters_Work()
+        {
+            // Test all valid Base32 characters (0-9, A-V)
+            string allBase32Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+            
+            // Each Base32 character should convert to binary and back without error
+            foreach (char c in allBase32Chars)
+            {
+                string singleChar = c.ToString();
+                
+                // Should not throw
+                Assert.DoesNotThrow(() => NumberConverter.Convert(singleChar, NumberFormats.Base32, NumberFormats.Bin));
+                
+                // Convert to binary and back should yield same result (except case normalization)
+                string binary = NumberConverter.Convert(singleChar, NumberFormats.Base32, NumberFormats.Bin);
+                string backToBase32 = NumberConverter.Convert(binary, NumberFormats.Bin, NumberFormats.Base32);
+                
+                Assert.That(backToBase32.ToUpper(), Is.EqualTo(singleChar.ToUpper()));
+            }
+        }
+
+        [Test]
+        public void Convert_Base32_InvalidCharacters_ThrowsException()
+        {
+            // Base32 only supports 0-9 and A-V, so characters like W, X, Y, Z should fail
+            string[] invalidChars = { "W", "X", "Y", "Z", "w", "x", "y", "z" };
+            
+            foreach (string invalidChar in invalidChars)
+            {
+                Assert.Throws<ArgumentException>(() => 
+                    NumberConverter.Convert(invalidChar, NumberFormats.Base32, NumberFormats.Bin));
+            }
+        }
+
+        [Test]
+        public void Convert_Base32_SpecificValues_CorrectResults()
+        {
+            // Test specific known values
+            Assert.That(NumberConverter.Convert("0", NumberFormats.Base32, NumberFormats.Bin), Is.EqualTo("0"));
+            Assert.That(NumberConverter.Convert("1", NumberFormats.Base32, NumberFormats.Bin), Is.EqualTo("1"));
+            Assert.That(NumberConverter.Convert("V", NumberFormats.Base32, NumberFormats.Bin), Is.EqualTo("11111")); // 31 in binary
+            Assert.That(NumberConverter.Convert("10", NumberFormats.Base32, NumberFormats.Bin), Is.EqualTo("100000")); // 32 in binary
+            
+            // Reverse tests
+            Assert.That(NumberConverter.Convert("0", NumberFormats.Bin, NumberFormats.Base32), Is.EqualTo("0"));
+            Assert.That(NumberConverter.Convert("1", NumberFormats.Bin, NumberFormats.Base32), Is.EqualTo("1"));
+            Assert.That(NumberConverter.Convert("11111", NumberFormats.Bin, NumberFormats.Base32), Is.EqualTo("V"));
+            Assert.That(NumberConverter.Convert("100000", NumberFormats.Bin, NumberFormats.Base32), Is.EqualTo("10"));
+        }
+
+        [Test]
+        public void ConvertBinaryWithGrouping_ToBase32_ReturnsCorrectChars()
+        {
+            // Arrange - binary 1111111111 (1023 decimal) should convert to Base32 VV (31*32 + 31 = 1023)
+            string binaryInput = "1111111111";
+            
+            // Act
+            var result = NumberConverter.ConvertBinaryWithGrouping(binaryInput, NumberFormats.Base32);
+            
+            // Assert - processes 11111 (V) first, then 11111 (V)
+            Assert.That(result, Has.Count.EqualTo(2));
+            Assert.That(result[0], Is.EqualTo('V'));
+            Assert.That(result[1], Is.EqualTo('V'));
         }
     }
 }

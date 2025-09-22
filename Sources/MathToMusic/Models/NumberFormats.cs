@@ -6,6 +6,7 @@
         Qad = 4,
         Oct = 8,
         Dec = 10,
-        Hex = 16
+        Hex = 16,
+        Base32 = 32
     }
 }
