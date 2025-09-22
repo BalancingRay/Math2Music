@@ -1,6 +1,7 @@
 using MathToMusic.Contracts;
 using MathToMusic.Models;
 using MathToMusic.Processors;
+using MathToMusic.Utils;
 using NUnit.Framework;
 
 namespace MathToMusic.Tests
@@ -316,6 +317,30 @@ namespace MathToMusic.Tests
 
             // Check tone value: 'V'=31
             Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 31)); // 'V' = 31
+        }
+
+        [Test]
+        public void Base32_EndToEndFunctionality_WorksCorrectly()
+        {
+            // Test conversion functionality
+            string base32Max = "V"; // 31 in decimal format
+            string binaryResult = NumberConverter.Convert(base32Max, NumberFormats.Base32, NumberFormats.Bin);
+            string decimalResult = NumberConverter.Convert(base32Max, NumberFormats.Base32, NumberFormats.Dec);
+            
+            Assert.That(binaryResult, Is.EqualTo("11111")); // 31 in binary
+            Assert.That(decimalResult, Is.EqualTo("31"));   // 31 in decimal
+            
+            // Test reverse conversion
+            string backToBase32 = NumberConverter.Convert("31", NumberFormats.Dec, NumberFormats.Base32);
+            Assert.That(backToBase32, Is.EqualTo("V"));
+            
+            // Test tone processing  
+            var result = _processor.Process("V", NumberFormats.Base32, NumberFormats.Base32);
+            
+            Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 31)); // 5580 Hz
+            
+            Console.WriteLine("✅ Base32 End-to-End Test Passed!");
+            Console.WriteLine($"✅ Base32 'V' = Decimal 31 = Binary 11111 = Frequency {180*31}Hz");
         }
     }
 }
