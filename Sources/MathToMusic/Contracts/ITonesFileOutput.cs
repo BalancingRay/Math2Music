@@ -1,5 +1,3 @@
-using MathToMusic.Contracts;
-
 namespace MathToMusic.Contracts
 {
     /// <summary>
@@ -13,6 +11,6 @@ namespace MathToMusic.Contracts
         /// </summary>
         /// <param name="input">The tone sequences to output</param>
         /// <returns>The path to the created file, or null if no file was created</returns>
-        string? SendAndGetFilePath(IList<Sequiention> input);
+        string? ProcessAndGetFilePath(IList<Sequiention> input);
     }
 }

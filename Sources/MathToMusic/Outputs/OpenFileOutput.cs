@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using MathToMusic.Contracts;
+using System.Diagnostics;
 
 namespace MathToMusic.Outputs
 {
@@ -17,18 +17,18 @@ namespace MathToMusic.Outputs
 
         public void Send(IList<Sequiention> input)
         {
-            SendAndGetFilePath(input);
+            ProcessAndGetFilePath(input);
         }
 
-        public string? SendAndGetFilePath(IList<Sequiention> input)
+        public string? ProcessAndGetFilePath(IList<Sequiention> input)
         {
-            string? filePath = _innerOutput.SendAndGetFilePath(input);
-            
+            string? filePath = _innerOutput.ProcessAndGetFilePath(input);
+
             if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
             {
                 OpenFileInDefaultApplication(filePath);
             }
-            
+
             return filePath;
         }
 

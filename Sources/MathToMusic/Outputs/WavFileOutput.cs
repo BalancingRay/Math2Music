@@ -96,10 +96,10 @@ namespace MathToMusic.Outputs
 
         public void Send(IList<Sequiention> input)
         {
-            SendAndGetFilePath(input);
+            ProcessAndGetFilePath(input);
         }
 
-        public string? SendAndGetFilePath(IList<Sequiention> input)
+        public string? ProcessAndGetFilePath(IList<Sequiention> input)
         {
             if (input == null || input.Count == 0)
                 return null;
@@ -210,7 +210,7 @@ namespace MathToMusic.Outputs
             }
 
             // Timber coefficients are now passed directly as parameter
-            
+
             for (int i = 0; i < sampleCount; i++)
             {
                 if (startIndex + i < leftChannel.Length)

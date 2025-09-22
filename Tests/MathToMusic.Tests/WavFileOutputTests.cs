@@ -350,7 +350,7 @@ namespace MathToMusic.Tests
             string? filePath = null;
             Assert.DoesNotThrow(() => 
             {
-                filePath = _wavOutput.SendAndGetFilePath(sequences);
+                filePath = _wavOutput.ProcessAndGetFilePath(sequences);
             });
 
             // Assert
@@ -405,7 +405,7 @@ namespace MathToMusic.Tests
             string? filePath = null;
             Assert.DoesNotThrow(() => 
             {
-                filePath = _wavOutput.SendAndGetFilePath(input);
+                filePath = _wavOutput.ProcessAndGetFilePath(input);
             });
 
             // Assert
@@ -438,7 +438,7 @@ namespace MathToMusic.Tests
             string? filePath = null;
             Assert.DoesNotThrow(() => 
             {
-                filePath = _wavOutput.SendAndGetFilePath(sequences);
+                filePath = _wavOutput.ProcessAndGetFilePath(sequences);
             });
 
             // Assert
@@ -470,7 +470,7 @@ namespace MathToMusic.Tests
             string? filePath = null;
             Assert.DoesNotThrow(() => 
             {
-                filePath = _wavOutput.SendAndGetFilePath(sequences);
+                filePath = _wavOutput.ProcessAndGetFilePath(sequences);
             });
 
             // Assert
@@ -502,7 +502,7 @@ namespace MathToMusic.Tests
             string? filePath = null;
             Assert.DoesNotThrow(() => 
             {
-                filePath = _wavOutput.SendAndGetFilePath(sequences);
+                filePath = _wavOutput.ProcessAndGetFilePath(sequences);
             });
 
             // Assert
@@ -593,7 +593,7 @@ namespace MathToMusic.Tests
             string? filePath = null;
             Assert.DoesNotThrow(() => 
             {
-                filePath = _wavOutput.SendAndGetFilePath(sequences);
+                filePath = _wavOutput.ProcessAndGetFilePath(sequences);
             });
 
             // Assert - Should handle low frequency amplification + stereo without issues

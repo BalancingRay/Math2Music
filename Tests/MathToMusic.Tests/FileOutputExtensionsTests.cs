@@ -126,7 +126,7 @@ namespace MathToMusic.Tests
             var wrappedOutput = _testOutput.OpenFileLocation();
 
             // Act
-            string? result = wrappedOutput.SendAndGetFilePath(_testInput);
+            string? result = wrappedOutput.ProcessAndGetFilePath(_testInput);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -141,7 +141,7 @@ namespace MathToMusic.Tests
             var wrappedOutput = _testOutput.OpenFile();
 
             // Act
-            string? result = wrappedOutput.SendAndGetFilePath(_testInput);
+            string? result = wrappedOutput.ProcessAndGetFilePath(_testInput);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -170,7 +170,7 @@ namespace MathToMusic.Tests
             var wrappedOutput = _testOutput.OpenFileLocation();
 
             // Act
-            string? result = wrappedOutput.SendAndGetFilePath(null);
+            string? result = wrappedOutput.ProcessAndGetFilePath(null);
 
             // Assert
             Assert.That(result, Is.Null);
@@ -184,7 +184,7 @@ namespace MathToMusic.Tests
             var emptyInput = new List<Sequiention>();
 
             // Act
-            string? result = wrappedOutput.SendAndGetFilePath(emptyInput);
+            string? result = wrappedOutput.ProcessAndGetFilePath(emptyInput);
 
             // Assert
             Assert.That(result, Is.Null);
@@ -208,7 +208,7 @@ namespace MathToMusic.Tests
             var wavOutput = new WavFileOutput();
 
             // Act
-            string? result = wavOutput.SendAndGetFilePath(_testInput);
+            string? result = wavOutput.ProcessAndGetFilePath(_testInput);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -243,10 +243,10 @@ namespace MathToMusic.Tests
 
         public void Send(IList<Sequiention> input)
         {
-            SendAndGetFilePath(input);
+            ProcessAndGetFilePath(input);
         }
 
-        public string? SendAndGetFilePath(IList<Sequiention> input)
+        public string? ProcessAndGetFilePath(IList<Sequiention> input)
         {
             WasCalled = true;
             LastInput = input;

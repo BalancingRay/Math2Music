@@ -32,22 +32,22 @@ namespace MathToMusic.Demo
             
             Console.WriteLine("\n1. Basic WavFileOutput (no post-processing):");
             var basicOutput = new WavFileOutput();
-            string? filePath1 = basicOutput.SendAndGetFilePath(input);
+            string? filePath1 = basicOutput.ProcessAndGetFilePath(input);
             Console.WriteLine($"Created file: {filePath1}");
             
             Console.WriteLine("\n2. WavFileOutput with OpenFileLocation():");
             var outputWithLocation = new WavFileOutput().OpenFileLocation();
-            string? filePath2 = outputWithLocation.SendAndGetFilePath(input);
+            string? filePath2 = outputWithLocation.ProcessAndGetFilePath(input);
             Console.WriteLine($"Created file and opened location: {filePath2}");
             
             Console.WriteLine("\n3. WavFileOutput with OpenFile():");
             var outputWithFile = new WavFileOutput().OpenFile();
-            string? filePath3 = outputWithFile.SendAndGetFilePath(input);
+            string? filePath3 = outputWithFile.ProcessAndGetFilePath(input);
             Console.WriteLine($"Created file and opened in app: {filePath3}");
             
             Console.WriteLine("\n4. WavFileOutput with chained post-processing:");
             var chainedOutput = new WavFileOutput().OpenFileLocation().OpenFile();
-            string? filePath4 = chainedOutput.SendAndGetFilePath(input);
+            string? filePath4 = chainedOutput.ProcessAndGetFilePath(input);
             Console.WriteLine($"Created file, opened location AND opened in app: {filePath4}");
             
             Console.WriteLine("\n=== Demonstration Complete ===");
