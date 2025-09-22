@@ -236,15 +236,15 @@ namespace MathToMusic.Tests
         [Test]
         public void Process_InvalidCharacters_SkipsInvalidChars()
         {
-            // Arrange
-            string input = "1G2"; // G is invalid for most formats
+            // Arrange - using character beyond Base32 range
+            string input = "1X2"; // X is invalid for any supported format (beyond Base32's V)
 
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            // Should only process '1' and '2', skipping 'G'
+            // Should only process '1' and '2', skipping 'X'
             foreach (var sequence in result)
             {
                 Assert.That(sequence.Tones, Has.Count.EqualTo(2));

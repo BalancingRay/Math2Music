@@ -60,8 +60,8 @@ namespace MathToMusic.Tests
         [Test]
         public void Process_InvalidCharacters_SkipsInvalidChars()
         {
-            // Arrange
-            string input = "1G2"; // G is invalid for decimal
+            // Arrange - using characters not in any supported format
+            string input = "1X2"; // X is invalid for any supported format (beyond Base32's V)
 
             // Act
             var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Dec);
@@ -257,6 +257,65 @@ namespace MathToMusic.Tests
             // Check total duration
             var expectedTotalDuration = 3 * customDuration;
             Assert.That(result[0].TotalDuration.TotalMilliseconds, Is.EqualTo(expectedTotalDuration));
+        }
+
+        [Test]
+        public void Process_Base32Input_ReturnsCorrectTones()
+        {
+            // Arrange - test Base32 characters including higher values
+            string input = "0123456789ABCDEFGHIJKLMNOPQRSTUV"; // All valid Base32 characters (0-31)
+
+            // Act
+            var result = _processor.Process(input, NumberFormats.Base32, NumberFormats.Base32);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].Tones, Has.Count.EqualTo(32)); // All 32 characters
+
+            // Check specific tone values for key characters
+            Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 0));  // '0' = 0
+            Assert.That(result[0].Tones[9].ObertonFrequencies[0], Is.EqualTo(180 * 9));  // '9' = 9
+            Assert.That(result[0].Tones[10].ObertonFrequencies[0], Is.EqualTo(180 * 10)); // 'A' = 10
+            Assert.That(result[0].Tones[15].ObertonFrequencies[0], Is.EqualTo(180 * 15)); // 'F' = 15
+            Assert.That(result[0].Tones[16].ObertonFrequencies[0], Is.EqualTo(180 * 16)); // 'G' = 16 (new for Base32)
+            Assert.That(result[0].Tones[25].ObertonFrequencies[0], Is.EqualTo(180 * 25)); // 'P' = 25
+            Assert.That(result[0].Tones[31].ObertonFrequencies[0], Is.EqualTo(180 * 31)); // 'V' = 31 (max Base32)
+        }
+
+        [Test]
+        public void Process_Base32ToDecimal_ConvertsCorrectly()
+        {
+            // Arrange
+            string input = "V"; // Base32 'V' = 31 decimal
+
+            // Act
+            var result = _processor.Process(input, NumberFormats.Dec, NumberFormats.Base32);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result[0].Tones, Has.Count.EqualTo(2)); // "31" has 2 characters
+
+            // Check tone values: '3'=3, '1'=1
+            Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 3)); // '3'
+            Assert.That(result[0].Tones[1].ObertonFrequencies[0], Is.EqualTo(180 * 1)); // '1'
+        }
+
+        [Test]
+        public void Process_DecimalToBase32_ConvertsCorrectly()
+        {
+            // Arrange
+            string input = "31"; // Decimal 31 should convert to Base32 'V'
+
+            // Act
+            var result = _processor.Process(input, NumberFormats.Base32, NumberFormats.Dec);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result[0].Tones, Has.Count.EqualTo(1)); // "V" has 1 character
+
+            // Check tone value: 'V'=31
+            Assert.That(result[0].Tones[0].ObertonFrequencies[0], Is.EqualTo(180 * 31)); // 'V' = 31
         }
     }
 }
