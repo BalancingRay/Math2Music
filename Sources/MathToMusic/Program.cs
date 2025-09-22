@@ -96,6 +96,48 @@ while (true)
             .ToArray();
     }
 
+    Console.WriteLine("Do you want to apply a timber profile? Enter profile name or skip:");
+    Console.WriteLine("Available profiles:");
+    var availableProfiles = TimberProfiles.GetAvailableProfiles().ToList();
+    for (int i = 0; i < availableProfiles.Count; i++)
+    {
+        Console.WriteLine($"  {i + 1:D2}. {availableProfiles[i]}");
+    }
+    Console.WriteLine("  (Enter number 1-{0} or profile name, or press Enter to skip)", availableProfiles.Count);
+    
+    string? timberSelection = Console.ReadLine();
+    string? selectedTimberProfile = null;
+    
+    if (!string.IsNullOrEmpty(timberSelection))
+    {
+        // Try to parse as number first
+        if (int.TryParse(timberSelection, out int profileNumber) && 
+            profileNumber >= 1 && profileNumber <= availableProfiles.Count)
+        {
+            selectedTimberProfile = availableProfiles[profileNumber - 1];
+        }
+        // Try direct profile name
+        else if (TimberProfiles.HasProfile(timberSelection))
+        {
+            selectedTimberProfile = timberSelection;
+        }
+        // Try case-insensitive match
+        else
+        {
+            selectedTimberProfile = availableProfiles
+                .FirstOrDefault(p => p.Equals(timberSelection, StringComparison.OrdinalIgnoreCase));
+        }
+        
+        if (selectedTimberProfile != null)
+        {
+            Console.WriteLine($"Selected timber profile: {selectedTimberProfile}");
+        }
+        else
+        {
+            Console.WriteLine($"Unknown timber profile '{timberSelection}'. Continuing without timber.");
+        }
+    }
+
     Console.WriteLine("Do you prefere to use reach sound processor: Y / N (skip) ?");
     string yes = "y";
     var userInput = Console.ReadLine();
@@ -110,6 +152,23 @@ while (true)
     foreach (var outputFormat in outFormats)
     {
         var song = processor.Process(input, outputFormat, inputFormat);
+        
+        // Apply timber processing if a profile was selected
+        if (!string.IsNullOrEmpty(selectedTimberProfile) && song.Count > 0)
+        {
+            var timberProcessor = new TimberSequenceProcessor();
+            var processedSong = new List<Sequiention>();
+            
+            foreach (var sequence in song)
+            {
+                var processedSequence = TimberSequenceProcessor.ApplyTimber(sequence, selectedTimberProfile);
+                processedSong.Add(processedSequence);
+            }
+            
+            song = processedSong;
+            Console.WriteLine($"Applied timber profile: {selectedTimberProfile}");
+        }
+        
         if (song.Count > 0 && song[0].TotalDuration > TimeSpan.Zero)
         {
             output.Send(song);
