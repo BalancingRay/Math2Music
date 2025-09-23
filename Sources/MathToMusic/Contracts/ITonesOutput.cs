@@ -9,6 +9,7 @@
     {
         public TimeSpan Duration { get; set; }
         public double[] ObertonFrequencies { get; set; }
+        public double BaseTone => ObertonFrequencies?.Length > 0 ? ObertonFrequencies[0] : 0;
 
         /// <summary>
         /// Single tone
@@ -26,6 +27,7 @@
     {
         public TimeSpan TotalDuration { get; set; }
         public IList<Tone> Tones { get; set; }
-        public string Title { get; set; }
+        public string? Title { get; set; }
+        public float[]? Timber { get; set; }
     }
 }

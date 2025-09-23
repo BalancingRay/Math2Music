@@ -1,4 +1,4 @@
-﻿namespace MathToMusic.Inputs
+﻿namespace MathToMusic.Outputs
 {
     internal class SomeOutput
     {

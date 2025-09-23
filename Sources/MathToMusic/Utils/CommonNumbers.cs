@@ -2,6 +2,7 @@
 {
     internal static class CommonNumbers
     {
+        public const string Pi100Value = "3.1415926535 8979323846 2643383279 5028841971 6939937510 5820974944 5923078164 0628620899 8628034825 3421170679";
         public readonly static Dictionary<string, string> Collection =
         new Dictionary<string, string>()
         {
