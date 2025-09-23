@@ -108,6 +108,7 @@ namespace MathToMusic.Utils
                 NumberFormats.Qad => ConvertQuaternaryToBinary(input),
                 NumberFormats.Oct => ConvertOctalToBinary(input),
                 NumberFormats.Hex => ConvertHexToBinary(input),
+                NumberFormats.Base32 => ConvertBase32ToBinary(input),
                 _ => throw new ArgumentException($"Unsupported conversion from format: {fromFormat}")
             };
         }
@@ -128,6 +129,7 @@ namespace MathToMusic.Utils
                 NumberFormats.Qad => ConvertBinaryToQuaternary(binaryInput),
                 NumberFormats.Oct => ConvertBinaryToOctal(binaryInput),
                 NumberFormats.Hex => ConvertBinaryToHex(binaryInput),
+                NumberFormats.Base32 => ConvertBinaryToBase32(binaryInput),
                 _ => throw new ArgumentException($"Unsupported conversion to format: {toFormat}")
             };
         }
@@ -145,7 +147,6 @@ namespace MathToMusic.Utils
 
             var result = new List<char>();
             int groupSize = GetGroupSizeForFormat(targetFormat);
-            string format = targetFormat == NumberFormats.Hex ? "X" : "0";
 
             // Process from right to left in groups (exactly like original algorithm)
             for (var i = binaryInput.Length - 1; i >= 0; i -= groupSize)
@@ -157,15 +158,28 @@ namespace MathToMusic.Utils
                         convertedValue += (int)Math.Pow(2, j);
                 }
                 
-                string convertedString = convertedValue.ToString(format);
-                if (convertedString.Length > 0)
-                {
-                    // Add at end (not insert at beginning) to match original behavior
-                    result.Add(convertedString[0]);
-                }
+                // Convert value to appropriate character based on target format
+                char convertedChar = GetCharacterForValue(convertedValue, targetFormat);
+                result.Add(convertedChar);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Convert a numeric value to the appropriate character for the target format
+        /// </summary>
+        /// <param name="value">Numeric value to convert</param>
+        /// <param name="format">Target number format</param>
+        /// <returns>Character representation</returns>
+        private static char GetCharacterForValue(int value, NumberFormats format)
+        {
+            return format switch
+            {
+                NumberFormats.Hex => value < 10 ? (char)('0' + value) : (char)('A' + value - 10),
+                NumberFormats.Base32 => value < 10 ? (char)('0' + value) : (char)('A' + value - 10),
+                _ => (char)('0' + value) // For Bin, Qad, Oct, Dec - just use numeric characters
+            };
         }
 
         /// <summary>
@@ -456,6 +470,77 @@ namespace MathToMusic.Utils
                 (NumberFormats.Bin, NumberFormats.Dec) => ConvertLargeBinaryToDecimal(input),
                 _ => throw new ArgumentException($"Large number conversion from {fromFormat} to {toFormat} not implemented yet")
             };
+        }
+
+        /// <summary>
+        /// Convert binary string to Base32 string (supports very long strings)
+        /// Base32 uses characters 0-9 and A-V (32 characters total)
+        /// </summary>
+        /// <param name="binaryInput">Binary input string</param>
+        /// <returns>Base32 string</returns>
+        private static string ConvertBinaryToBase32(string binaryInput)
+        {
+            if (string.IsNullOrEmpty(binaryInput))
+                return string.Empty;
+
+            var result = new System.Text.StringBuilder();
+            
+            // Process from right to left in groups of 5 bits (since 2^5 = 32 for Base32)
+            for (var i = binaryInput.Length - 1; i >= 0; i -= 5)
+            {
+                int value = 0;
+                // Process up to 5 bits
+                for (int j = 0; j < 5 && (i - j) >= 0; j++)
+                {
+                    if (binaryInput[i - j] == '1')
+                        value += (int)Math.Pow(2, j);
+                }
+                
+                // Convert value (0-31) to Base32 character
+                char base32Char = value < 10 ? (char)('0' + value) : (char)('A' + value - 10);
+                result.Insert(0, base32Char);
+            }
+            
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// Convert Base32 string to binary string (supports very long strings)
+        /// Base32 uses characters 0-9 and A-V (32 characters total)
+        /// </summary>
+        /// <param name="base32Input">Base32 input string</param>
+        /// <returns>Binary string</returns>
+        private static string ConvertBase32ToBinary(string base32Input)
+        {
+            if (string.IsNullOrEmpty(base32Input))
+                return string.Empty;
+
+            var result = new System.Text.StringBuilder();
+            
+            foreach (char digit in base32Input)
+            {
+                int digitValue;
+                if (char.IsDigit(digit))
+                {
+                    digitValue = digit - '0';
+                }
+                else if (char.ToUpper(digit) >= 'A' && char.ToUpper(digit) <= 'V')
+                {
+                    digitValue = char.ToUpper(digit) - 'A' + 10;
+                }
+                else
+                {
+                    throw new ArgumentException($"Invalid Base32 digit: {digit}. Valid characters are 0-9 and A-V.");
+                }
+                
+                // Convert each Base32 digit to 5 binary digits
+                string binaryDigits = System.Convert.ToString(digitValue, 2).PadLeft(5, '0');
+                result.Append(binaryDigits);
+            }
+            
+            // Remove leading zeros but keep at least one digit
+            string binaryResult = result.ToString().TrimStart('0');
+            return string.IsNullOrEmpty(binaryResult) ? "0" : binaryResult;
         }
     }
 }
