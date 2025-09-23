@@ -256,71 +256,65 @@ var output = new WavFileOutput().OpenFileLocation().OpenFile();
 
 The application uses a configurable linear frequency mapping system with rich harmonic relationships:
 
-| Digit/Character | Multiplier | Default Frequency (Hz)* | Harmonic State | Musical Description | Icon |
-|-----------------|------------|-------------------------|----------------|---------------------|------|
-| 0               | 0          | 0                       | Silence        | Rest/Pause          | 🔇    |
-| 1               | 1          | 180                     | Base Tone      | Fundamental (C)     | 🎵    |
-| 2               | 2          | 360                     | Octave 1       | Perfect Octave (C') | 🎶    |
-| 3               | 3          | 540                     | Quinta + Oct   | Perfect Fifth + Octave (G') | 🎵    |
-| 4               | 4          | 720                     | Octave 2       | Double Octave (C'') | 🎶    |
-| 5               | 5          | 900                     | Tertia + Oct2  | Major Third + 2 Octaves (E'') | 🎵    |
-| 6               | 6          | 1080                    | Quinta + Oct2  | Perfect Fifth + 2 Octaves (G'') | 🎵    |
-| 7               | 7          | 1260                    | Septima + Oct2 | Harmonic 7th + 2 Octaves | 🎵    |
-| 8               | 8          | 1440                    | Octave 3       | Triple Octave (C''') | 🎶    |
-| 9               | 9          | 1620                    | Segunda + Oct3 | Major Second + 3 Octaves (D''') | 🎵    |
-| A               | 10         | 1800                    | Tertia + Oct3  | Major Third + 3 Octaves (E''') | 🎵    |
-| B               | 11         | 1980                    | Quarta Aug + Oct3 | Augmented Fourth + 3 Octaves | 🎵    |
-| C               | 12         | 2160                    | Quinta + Oct3  | Perfect Fifth + 3 Octaves (G''') | 🎵    |
-| D               | 13         | 2340                    | Sexta + Oct3   | Sixth + 3 Octaves   | 🎵    |
-| E               | 14         | 2520                    | Septima + Oct3 | Harmonic 7th + 3 Octaves | 🎵    |
-| F               | 15         | 2700                    | Septima Maj + Oct3 | Major 7th + 3 Octaves | 🎵    |
-| G               | 16         | 2880                    | Octave 4       | Quadruple Octave (C'''') | 🎶    |
-| H               | 17         | 3060                    | Harmonic 17    | Complex Harmonic + Octaves | 🎵    |
-| I               | 18         | 3240                    | Harmonic 18    | Complex Harmonic + Octaves | 🎵    |
-| J               | 19         | 3420                    | Harmonic 19    | Complex Harmonic + Octaves | 🎵    |
-| K               | 20         | 3600                    | Harmonic 20    | Complex Harmonic + Octaves | 🎵    |
-| L               | 21         | 3780                    | Harmonic 21    | Complex Harmonic + Octaves | 🎵    |
-| M               | 22         | 3960                    | Harmonic 22    | Complex Harmonic + Octaves | 🎵    |
-| N               | 23         | 4140                    | Harmonic 23    | Complex Harmonic + Octaves | 🎵    |
-| O               | 24         | 4320                    | Harmonic 24    | Complex Harmonic + Octaves | 🎵    |
-| P               | 25         | 4500                    | Harmonic 25    | Complex Harmonic + Octaves | 🎵    |
-| Q               | 26         | 4680                    | Harmonic 26    | Complex Harmonic + Octaves | 🎵    |
-| R               | 27         | 4860                    | Harmonic 27    | Complex Harmonic + Octaves | 🎵    |
-| S               | 28         | 5040                    | Harmonic 28    | Complex Harmonic + Octaves | 🎵    |
-| T               | 29         | 5220                    | Harmonic 29    | Complex Harmonic + Octaves | 🎵    |
-| U               | 30         | 5400                    | Harmonic 30    | Complex Harmonic + Octaves | 🎵    |
-| V               | 31         | 5580                    | Harmonic 31    | Complex Harmonic + Octaves | 🎵    |
+| Digit/Character | Multiplier | Default Frequency (Hz)* | Harmonic State |
+|-----------------|------------|-------------------------|----------------|
+| 0               | 0          | 0                       | Silence        |
+| 1               | 1          | 180                     | Base Tone      |
+| 2               | 2          | 360                     | Octave 1       |
+| 3               | 3          | 540                     | Quinta 1       |
+| 4               | 4          | 720                     | Octave 2       |
+| 5               | 5          | 900                     | Tertia 2       |
+| 6               | 6          | 1080                    | Quinta 2       |
+| 7               | 7          | 1260                    | Septima 2      |
+| 8               | 8          | 1440                    | Octave 3       |
+| 9               | 9          | 1620                    | Segunda 3      |
+| A               | 10         | 1800                    | Tertia 3       |
+| B               | 11         | 1980                    | Quarta 3       |
+| C               | 12         | 2160                    | Quinta 3       |
+| D               | 13         | 2340                    | Sexta 3        |
+| E               | 14         | 2520                    | Septima 3      |
+| F               | 15         | 2700                    | Septima Maj 3  |
+| G               | 16         | 2880                    | Octave 4       |
+| H               | 17         | 3060                    | Harmonic 17    |
+| I               | 18         | 3240                    | Segunda 4      |
+| J               | 19         | 3420                    | Harmonic 19    |
+| K               | 20         | 3600                    | Tertia 4       |
+| L               | 21         | 3780                    | Quarta 4       |
+| M               | 22         | 3960                    | Harmonic 22    |
+| N               | 23         | 4140                    | Harmonic 23    |
+| O               | 24         | 4320                    | Quinta 4       |
+| P               | 25         | 4500                    | Harmonic 25    |
+| Q               | 26         | 4680                    | Sexta 4        |
+| R               | 27         | 4860                    | Harmonic 27    |
+| S               | 28         | 5040                    | Septima 4      |
+| T               | 29         | 5220                    | Harmonic 29    |
+| U               | 30         | 5400                    | Septima Maj 4  |
+| V               | 31         | 5580                    | Harmonic 31    |
 
 *Default frequencies shown with 180Hz base frequency. Both base frequency and duration are user-configurable.*
 
 ### Harmonic Relationships
 
-**Perfect Octaves** 🎶 - Clean doubling of frequency:
+**Perfect Octaves** - Clean doubling of frequency:
 - **Octave 1** (2): Double the base frequency
 - **Octave 2** (4): Quadruple the base frequency  
 - **Octave 3** (8): Eight times the base frequency
 - **Octave 4** (16): Sixteen times the base frequency
 
-**Harmonic Intervals** 🎵 - Musical intervals based on harmonic series:
-- **Quinta** (3, 6, 12): Perfect fifth intervals (3:2 ratio)
-- **Tertia** (5, 10): Major third intervals (5:4 ratio) 
-- **Quarta** (11): Fourth intervals
-- **Segunda** (9): Major second intervals (9:8 ratio)
-- **Septima** (7, 14, 15): Seventh intervals (harmonic and major)
-- **Sexta** (13): Sixth intervals
+**Harmonic Intervals by Octave**:
+- **Octave 1**: Quinta 1 (3)
+- **Octave 2**: Tertia 2 (5), Quinta 2 (6), Septima 2 (7)
+- **Octave 3**: Segunda 3 (9), Tertia 3 (10), Quarta 3 (11), Quinta 3 (12), Sexta 3 (13), Septima 3 (14), Septima Maj 3 (15)
+- **Octave 4**: Segunda 4 (18), Tertia 4 (20), Quarta 4 (21), Quinta 4 (24), Sexta 4 (26), Septima 4 (28), Septima Maj 4 (30)
+- **Complex Harmonics**: Harmonic 17, 19, 22, 23, 25, 27, 29, 31 - intermediate tones between main intervals
 
 **Frequency Calculation**: `frequency = baseFrequency × digitValue`
 
 **Example**: With base frequency 180Hz:
 - Digit '1' → 180Hz (Base/Fundamental)
-- Digit '2' → 360Hz (Perfect Octave)
-- Digit '3' → 540Hz (Perfect Fifth + Octave)
-- Digit '4' → 720Hz (Double Octave)
-
-### Visual Legend
-- 🔇 **Silence**: No sound/rest
-- 🎵 **Harmonic Tones**: Complex harmonic intervals 
-- 🎶 **Perfect Octaves**: Clean octave relationships (powers of 2)
+- Digit '2' → 360Hz (Octave 1)
+- Digit '3' → 540Hz (Quinta 1)
+- Digit '4' → 720Hz (Octave 2)
 
 This harmonic structure creates naturally consonant musical relationships between digits, making mathematical sequences sound more musical and pleasing to the ear.
 
