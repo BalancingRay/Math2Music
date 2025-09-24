@@ -252,49 +252,71 @@ var output = new WavFileOutput().OpenFileLocation().OpenFile();
 - Automatic file organization in Results/ directory
 - Cross-platform compatible with graceful Windows-specific feature fallback
 
-## Frequency Mapping
+## Frequency Mapping with Harmonic States
 
-The application uses a configurable linear frequency mapping system:
+The application uses a configurable linear frequency mapping system with rich harmonic relationships:
 
-| Digit/Character | Multiplier | Default Frequency (Hz)* |
-|-----------------|------------|-------------------------|
-| 0               | 0          | 0 (Silence)            |
-| 1               | 1          | 180                    |
-| 2               | 2          | 360                    |
-| 3               | 3          | 540                    |
-| 4               | 4          | 720                    |
-| 5               | 5          | 900                    |
-| 6               | 6          | 1080                   |
-| 7               | 7          | 1260                   |
-| 8               | 8          | 1440                   |
-| 9               | 9          | 1620                   |
-| A               | 10         | 1800                   |
-| B               | 11         | 1980                   |
-| C               | 12         | 2160                   |
-| D               | 13         | 2340                   |
-| E               | 14         | 2520                   |
-| F               | 15         | 2700                   |
-| G               | 16         | 2880                   |
-| H               | 17         | 3060                   |
-| I               | 18         | 3240                   |
-| J               | 19         | 3420                   |
-| K               | 20         | 3600                   |
-| L               | 21         | 3780                   |
-| M               | 22         | 3960                   |
-| N               | 23         | 4140                   |
-| O               | 24         | 4320                   |
-| P               | 25         | 4500                   |
-| Q               | 26         | 4680                   |
-| R               | 27         | 4860                   |
-| S               | 28         | 5040                   |
-| T               | 29         | 5220                   |
-| U               | 30         | 5400                   |
-| V               | 31         | 5580                   |
+| Digit/Character | Multiplier | Default Frequency (Hz)* | Harmonic State |
+|-----------------|------------|-------------------------|----------------|
+| 0               | 0          | 0                       | Silence        |
+| 1               | 1          | 180                     | Base Tone      |
+| 2               | 2          | 360                     | Octave 1       |
+| 3               | 3          | 540                     | Quinta 1       |
+| 4               | 4          | 720                     | Octave 2       |
+| 5               | 5          | 900                     | Tertia 2       |
+| 6               | 6          | 1080                    | Quinta 2       |
+| 7               | 7          | 1260                    | Septima 2      |
+| 8               | 8          | 1440                    | Octave 3       |
+| 9               | 9          | 1620                    | Segunda 3      |
+| A               | 10         | 1800                    | Tertia 3       |
+| B               | 11         | 1980                    | Quarta 3       |
+| C               | 12         | 2160                    | Quinta 3       |
+| D               | 13         | 2340                    | Sexta 3        |
+| E               | 14         | 2520                    | Septima 3      |
+| F               | 15         | 2700                    | Septima Maj 3  |
+| G               | 16         | 2880                    | Octave 4       |
+| H               | 17         | 3060                    | Harmonic 17    |
+| I               | 18         | 3240                    | Segunda 4      |
+| J               | 19         | 3420                    | Harmonic 19    |
+| K               | 20         | 3600                    | Tertia 4       |
+| L               | 21         | 3780                    | Quarta 4       |
+| M               | 22         | 3960                    | Harmonic 22    |
+| N               | 23         | 4140                    | Harmonic 23    |
+| O               | 24         | 4320                    | Quinta 4       |
+| P               | 25         | 4500                    | Harmonic 25    |
+| Q               | 26         | 4680                    | Sexta 4        |
+| R               | 27         | 4860                    | Harmonic 27    |
+| S               | 28         | 5040                    | Septima 4      |
+| T               | 29         | 5220                    | Harmonic 29    |
+| U               | 30         | 5400                    | Septima Maj 4  |
+| V               | 31         | 5580                    | Harmonic 31    |
 
 *Default frequencies shown with 180Hz base frequency. Both base frequency and duration are user-configurable.*
 
+### Harmonic Relationships
+
+**Perfect Octaves** - Clean doubling of frequency:
+- **Octave 1** (2): Double the base frequency
+- **Octave 2** (4): Quadruple the base frequency  
+- **Octave 3** (8): Eight times the base frequency
+- **Octave 4** (16): Sixteen times the base frequency
+
+**Harmonic Intervals by Octave**:
+- **Octave 1**: Quinta 1 (3)
+- **Octave 2**: Tertia 2 (5), Quinta 2 (6), Septima 2 (7)
+- **Octave 3**: Segunda 3 (9), Tertia 3 (10), Quarta 3 (11), Quinta 3 (12), Sexta 3 (13), Septima 3 (14), Septima Maj 3 (15)
+- **Octave 4**: Segunda 4 (18), Tertia 4 (20), Quarta 4 (21), Quinta 4 (24), Sexta 4 (26), Septima 4 (28), Septima Maj 4 (30)
+- **Complex Harmonics**: Harmonic 17, 19, 22, 23, 25, 27, 29, 31 - intermediate tones between main intervals
+
 **Frequency Calculation**: `frequency = baseFrequency × digitValue`
-**Example**: With base frequency 180Hz, digit '4' produces 180 × 4 = 720Hz
+
+**Example**: With base frequency 180Hz:
+- Digit '1' → 180Hz (Base/Fundamental)
+- Digit '2' → 360Hz (Octave 1)
+- Digit '3' → 540Hz (Quinta 1)
+- Digit '4' → 720Hz (Octave 2)
+
+This harmonic structure creates naturally consonant musical relationships between digits, making mathematical sequences sound more musical and pleasing to the ear.
 
 ## Technical Notes
 
